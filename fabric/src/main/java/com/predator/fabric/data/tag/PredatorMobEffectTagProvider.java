@@ -11,10 +11,9 @@ import net.minecraft.world.effect.MobEffect;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Mob-effect tag contributions from AVP-Predator. The mud cloak is tagged into
- * {@link BLibMobEffectTags#MILK_IMMUNE} (water washes mud off, milk doesn't) and
- * {@link BLibMobEffectTags#NO_PARTICLES} (the cloak's purpose is defeated by a visible particle swirl).
- * Other entries can be added here as new effects are introduced.
+ * Mob-effect tag contributions from AVP-Predator. The mud cloak is tagged into {@link BLibMobEffectTags#MILK_IMMUNE}
+ * (water washes mud off, milk doesn't) and {@link BLibMobEffectTags#NO_PARTICLES} (the cloak's purpose is defeated by a
+ * visible particle swirl). Other entries can be added here as new effects are introduced.
  */
 public class PredatorMobEffectTagProvider extends FabricTagProvider<MobEffect> {
 

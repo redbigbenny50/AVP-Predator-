@@ -1,4 +1,6 @@
 pluginManagement {
+	includeBuild 'blib-gradle'
+
 	repositories {
 		mavenLocal()
 		gradlePluginPortal()

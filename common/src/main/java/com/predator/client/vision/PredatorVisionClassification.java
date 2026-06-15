@@ -10,10 +10,10 @@ import org.jetbrains.annotations.Nullable;
  * to push (BLib lane A = "background under oldMode", lane B = "background under newMode") plus whether to push the
  * per-bone-light context.
  * <p>
- * During a {@link PredatorVisionTransition} the two modes can differ — left of the wipe line the shader applies
- * newMode coloring, right of the line it applies oldMode coloring — and an entity can be visible under one but not
- * the other. The two lanes carry the per-mode decision down to the shader so each side picks the correct
- * foreground/background routing without the union-and-pick compromise that the old single-flag scheme required.
+ * During a {@link PredatorVisionTransition} the two modes can differ — left of the wipe line the shader applies newMode
+ * coloring, right of the line it applies oldMode coloring — and an entity can be visible under one but not the other.
+ * The two lanes carry the per-mode decision down to the shader so each side picks the correct foreground/background
+ * routing without the union-and-pick compromise that the old single-flag scheme required.
  * <p>
  * Lives outside {@code com.predator.mixin.*} because mixin packages can't contain inner classes that the mixin code
  * itself references — mixin owns those packages and blocks direct class loading.
@@ -21,7 +21,10 @@ import org.jetbrains.annotations.Nullable;
 public final class PredatorVisionClassification {
 
     public enum Result {
-        /** The mode does not classify this entity in either direction (e.g. the mode is {@link PredatorVisionMode#REGULAR}). */
+        /**
+         * The mode does not classify this entity in either direction (e.g. the mode is
+         * {@link PredatorVisionMode#REGULAR}).
+         */
         NONE,
         /** The mode treats this entity as a foreground / highlighted entity. */
         VISIBLE,
@@ -30,11 +33,14 @@ public final class PredatorVisionClassification {
     }
 
     /**
-     * Per-mode classification for a single entity. {@code underOld} corresponds to the shader's {@code oldMode}
-     * (right of the wipe line during a transition); {@code underNew} corresponds to {@code newMode} (left of the
-     * line). Outside a transition the two values are equal.
+     * Per-mode classification for a single entity. {@code underOld} corresponds to the shader's {@code oldMode} (right
+     * of the wipe line during a transition); {@code underNew} corresponds to {@code newMode} (left of the line).
+     * Outside a transition the two values are equal.
      */
-    public record Classification(Result underOld, Result underNew) {
+    public record Classification(
+        Result underOld,
+        Result underNew
+    ) {
 
         public boolean anyVisible() {
             return underOld == Result.VISIBLE || underNew == Result.VISIBLE;
@@ -61,10 +67,10 @@ public final class PredatorVisionClassification {
     /**
      * Classify {@code entity} under the currently-active old/new modes.
      * <p>
-     * Outside a transition both halves resolve to the helmet's current mode (so the two lanes carry identical
-     * values). Inside a transition the halves use {@link PredatorVisionTransition#oldMode()} and
-     * {@link PredatorVisionTransition#newMode()} respectively — matching the {@code oldMode}/{@code newMode}
-     * uniforms the shader sees from {@link PredatorVisionPostEffects}.
+     * Outside a transition both halves resolve to the helmet's current mode (so the two lanes carry identical values).
+     * Inside a transition the halves use {@link PredatorVisionTransition#oldMode()} and
+     * {@link PredatorVisionTransition#newMode()} respectively — matching the {@code oldMode}/{@code newMode} uniforms
+     * the shader sees from {@link PredatorVisionPostEffects}.
      */
     public static Classification classify(LivingEntity entity) {
         var modes = activeModes();
@@ -75,9 +81,9 @@ public final class PredatorVisionClassification {
     }
 
     /**
-     * Classification for entities that are always background under any active vision mode — non-living entities
-     * (item entities, projectiles, minecarts, paintings, …) and block entities (chests, signs, banners, …). They
-     * have no visibility tag, so under a non-REGULAR mode they're BACKGROUND; under REGULAR they're NONE.
+     * Classification for entities that are always background under any active vision mode — non-living entities (item
+     * entities, projectiles, minecarts, paintings, …) and block entities (chests, signs, banners, …). They have no
+     * visibility tag, so under a non-REGULAR mode they're BACKGROUND; under REGULAR they're NONE.
      */
     public static Classification nonLivingClassification() {
         var modes = activeModes();
@@ -107,7 +113,10 @@ public final class PredatorVisionClassification {
         return null;
     }
 
-    private record ModePair(PredatorVisionMode old, PredatorVisionMode next) {}
+    private record ModePair(
+        PredatorVisionMode old,
+        PredatorVisionMode next
+    ) {}
 
     private static ModePair activeModes() {
         if (PredatorVisionTransition.isActive()) {

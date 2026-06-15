@@ -16,8 +16,8 @@ import java.util.Deque;
 
 /**
  * Background-flag push for block (tile) entities — chests, beacons, signs, banners, beds, conduits, end portals, etc.
- * They render via {@code BlockEntityRenderDispatcher}, parallel to (not under) {@code EntityRenderDispatcher}. Many BERs
- * use {@code rendertype_entity_*} render types under the hood (chest sheet, sign sheet, banner sheet) which BLib's
+ * They render via {@code BlockEntityRenderDispatcher}, parallel to (not under) {@code EntityRenderDispatcher}. Many
+ * BERs use {@code rendertype_entity_*} render types under the hood (chest sheet, sign sheet, banner sheet) which BLib's
  * patcher classifies as entity ({@code mask.r = 1.0}) — without a background-flag push, the vision shader would render
  * them as foreground entities (warm glow).
  * <p>

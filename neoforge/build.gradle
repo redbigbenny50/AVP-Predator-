@@ -12,6 +12,10 @@ dependencies {
     blibMod "me.shedaniel.cloth:cloth-config-neoforge:${project.cloth_version}"
 
     // Compatibility
-    blibMod "com.avp.alien:avp_alien-neoforge-1.21.1:${project.avp_alien_version}"
-    blibMod "com.avp.human:avp_human-neoforge-1.21.1:${project.avp_human_version}"
+    blibCompileOnly("com.avp.alien:avp_alien-neoforge-1.21.1:${project.avp_alien_version}") {
+        exclude group: 'com.blib'
+    }
+    blibCompileOnly("com.avp.human:avp_human-neoforge-1.21.1:${project.avp_human_version}") {
+        exclude group: 'com.blib'
+    }
 }

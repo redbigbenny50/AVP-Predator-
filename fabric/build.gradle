@@ -16,6 +16,10 @@ dependencies {
     modApi "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_version}"
 
     // Compatibility
-    blibMod "com.avp.alien:avp_alien-fabric-1.21.1:${project.avp_alien_version}"
-    blibMod "com.avp.human:avp_human-fabric-1.21.1:${project.avp_human_version}"
+    blibModCompileOnly("com.avp.alien:avp_alien-fabric-1.21.1:${project.avp_alien_version}") {
+        exclude group: 'com.blib'
+    }
+    blibModCompileOnly("com.avp.human:avp_human-fabric-1.21.1:${project.avp_human_version}") {
+        exclude group: 'com.blib'
+    }
 }

@@ -8,15 +8,15 @@ import net.minecraft.world.entity.LivingEntity;
 
 /**
  * Mud status effect — a thermal-vision cloak. Caked-on mud insulates the wearer's heat signature so a predator's
- * thermal vision reads them as world-cold instead of as a foreground entity (game-world reference: Dutch in the
- * 1987 film). The effect is consumed by {@link com.predator.client.vision.PredatorVisionClassification}, which
- * downgrades a THERMAL-visible classification to BACKGROUND while the effect is active. Other vision modes are
- * unaffected, so an em-tagged mob covered in mud still shows up under EM.
+ * thermal vision reads them as world-cold instead of as a foreground entity (game-world reference: Dutch in the 1987
+ * film). The effect is consumed by {@link com.predator.client.vision.PredatorVisionClassification}, which downgrades a
+ * THERMAL-visible classification to BACKGROUND while the effect is active. Other vision modes are unaffected, so an
+ * em-tagged mob covered in mud still shows up under EM.
  * <p>
- * Particles are suppressed entirely by tagging this effect into {@code BLibMobEffectTags#NO_PARTICLES} (the
- * mud should be silent, not announced by an obvious purple swirl). Milk does NOT cure mud — handled the same
- * way, via {@code BLibMobEffectTags#MILK_IMMUNE}. Mud washes off the moment the wearer goes underwater,
- * handled by the per-tick check below.
+ * Particles are suppressed entirely by tagging this effect into {@code BLibMobEffectTags#NO_PARTICLES} (the mud should
+ * be silent, not announced by an obvious purple swirl). Milk does NOT cure mud — handled the same way, via
+ * {@code BLibMobEffectTags#MILK_IMMUNE}. Mud washes off the moment the wearer goes underwater, handled by the per-tick
+ * check below.
  */
 public class MudStatusEffect extends MobEffect {
 
