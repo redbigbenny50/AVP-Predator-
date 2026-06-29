@@ -5,6 +5,7 @@ import com.blib.api.client.shader.v1.BLibPostEffectInput;
 import com.blib.api.client.shader.v1.BLibPostEffectSpec;
 import com.blib.api.client.shader.v1.BLibPostEffectUniform;
 import com.predator.Predator;
+import com.predator.client.compatibility.PredatorClientCompatibility;
 import com.predator.common.gameplay.component.PredatorVisionMode;
 
 /**
@@ -45,6 +46,10 @@ public final class PredatorVisionPostEffects {
     }
 
     private static boolean shouldRun() {
+        if (PredatorClientCompatibility.areVisionsDisabledBySodium()) {
+            return false;
+        }
+
         return PredatorVisionAccessor.currentVisionMode() != PredatorVisionMode.REGULAR
             || PredatorVisionTransition.isActive();
     }

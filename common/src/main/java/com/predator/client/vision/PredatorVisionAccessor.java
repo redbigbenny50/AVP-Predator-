@@ -1,5 +1,6 @@
 package com.predator.client.vision;
 
+import com.predator.client.compatibility.PredatorClientCompatibility;
 import com.predator.common.gameplay.component.PredatorVisionMode;
 import com.predator.common.registry.init.PredatorDataComponents;
 import com.predator.common.registry.init.item.PredatorArmorItems;
@@ -18,6 +19,10 @@ public final class PredatorVisionAccessor {
     }
 
     public static PredatorVisionMode currentVisionMode() {
+        if (PredatorClientCompatibility.areVisionsDisabledBySodium()) {
+            return PredatorVisionMode.REGULAR;
+        }
+
         var player = Minecraft.getInstance().player;
 
         if (player == null) {

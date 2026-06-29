@@ -4,6 +4,7 @@ import com.blib.api.client.input.v1.model.KeyInteractType;
 import com.just.core.functional.tuple.Tuple2;
 import com.predator.Predator;
 import com.predator.client.PredatorClient;
+import com.predator.client.compatibility.PredatorClientCompatibility;
 import com.predator.client.vision.PredatorVisionAccessor;
 import com.predator.client.vision.PredatorVisionTransition;
 import com.predator.common.network.packet.C2SCyclePredatorVisionPayload;
@@ -36,6 +37,11 @@ public class PredatorKeybindingRegistry {
             var helmet = player.getItemBySlot(EquipmentSlot.HEAD);
 
             if (!helmet.is(PredatorArmorItems.JUNGLE_PREDATOR_HELMET.get())) {
+                return;
+            }
+
+            if (PredatorClientCompatibility.areVisionsDisabledBySodium()) {
+                PredatorClientCompatibility.sendSodiumVisionIncompatibleMessage(player);
                 return;
             }
 
