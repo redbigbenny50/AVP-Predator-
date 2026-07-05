@@ -33,6 +33,7 @@ public class EnUsItemProvider {
         addItem(builder, PredatorItems.VERITANIUM_SHARD, "Veritanium Shard");
 
         // Tools & Utilities Items
+        addItem(builder, PredatorItems.MUD_BUCKET, "Mud Bucket");
         addItem(builder, PredatorItems.VERITANIUM_AXE, "Veritanium Axe");
         addItem(builder, PredatorItems.VERITANIUM_HOE, "Veritanium Hoe");
         addItem(builder, PredatorItems.VERITANIUM_PICKAXE, "Veritanium Pickaxe");

@@ -3,6 +3,7 @@ package com.predator.common.registry.init.item;
 import com.blib.api.common.registry.v1.BLibHolder;
 import com.blib.api.common.registry.v1.BLibRegistry;
 import com.predator.Predator;
+import com.predator.common.gameplay.item.MudBucketItem;
 import com.predator.common.gameplay.item.ShurikenItem;
 import com.predator.common.gameplay.item.SmartDiscItem;
 import com.predator.common.registry.init.PredatorTiers;
@@ -36,6 +37,8 @@ public class PredatorItems {
     public static final BLibHolder<Item> SHURIKEN = create("shuriken", ShurikenItem::new);
 
     public static final BLibHolder<Item> SMART_DISC = create("smart_disc", SmartDiscItem::new);
+
+    public static final BLibHolder<Item> MUD_BUCKET = create("mud_bucket", MudBucketItem::new);
 
     public static final BLibHolder<Item> VERITANIUM_AXE = create(
         "veritanium_axe",

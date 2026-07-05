@@ -35,6 +35,7 @@ public class ItemModelProvider extends FabricModelProvider {
 
         generateStandardItem(generators, PredatorItems.PREDATOR_MUSIC_DISC_1);
         generateStandardItem(generators, PredatorItems.PREDATOR_MUSIC_DISC_1_FRAGMENT);
+        generateStandardItem(generators, PredatorItems.MUD_BUCKET);
 
         generateHandheldItem(generators, PredatorItems.VERITANIUM_AXE);
         generateHandheldItem(generators, PredatorItems.VERITANIUM_HOE);
