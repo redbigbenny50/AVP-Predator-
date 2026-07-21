@@ -5,6 +5,10 @@ plugins {
 allprojects {
     repositories {
         mavenLocal()
+        maven {
+            name = "avpReleases"
+            url = uri("https://maven.aliensvspredatormod.com/releases")
+        }
     }
 
     configurations.configureEach {
@@ -63,6 +67,23 @@ blib {
             credentials {
                 usernameEnv = 'AVP_MAVEN_USERNAME'
                 passwordEnv = 'AVP_MAVEN_PASSWORD'
+            }
+        }
+    }
+}
+subprojects {
+    plugins.withId('maven-publish') {
+        publishing {
+            repositories {
+                maven {
+                    name = 'blib_engine'
+                    url = uri('https://maven.aliensvspredatormod.com/releases')
+
+                    credentials {
+                        username = System.getenv('MAVEN_USERNAME') ?: 'unused'
+                        password = System.getenv('MAVEN_PASSWORD') ?: 'unused'
+                    }
+                }
             }
         }
     }
