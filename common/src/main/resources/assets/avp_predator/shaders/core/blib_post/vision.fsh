@@ -118,125 +118,12 @@ float computeSkyHeat(vec2 uv, float drawDetail) {
     return mix(baseHeat, celestialTarget, clamp(drawDetail, 0.0, 1.0));
 }
 
-// Forward declarations — bodies are at the bottom of this file so the wipe logic in main() reads top-down.
-vec3 computeThermal(vec3 src, vec3 srcDim, float mask, vec4 drawData, vec4 specular, int materialId, float dimFactor, float backgroundFlag);
-vec3 computeEm(vec3 src, vec3 srcDim, float mask, vec4 drawData, float dimFactor, float backgroundFlag);
-vec3 selectMode(int mode, vec3 srcDim, vec3 thermalRgb, vec3 emRgb);
-
-void main() {
-    vec3 src = texture(DiffuseSampler, texCoord).rgb;
-    vec2 maskSample = texture(entityMask, texCoord).rg;
-    float mask = maskSample.r;
-    // mask.g packs two background-entity lanes from BLib: lane A (oldMode side of the wipe) contributes 0.25, lane
-    // B (newMode side) contributes 0.5. The four combinations land at exactly 0.0/0.25/0.5/0.75 under NEAREST
-    // sampling of the RG8 attachment. Decoding via step() pairs cleanly because the thresholds (0.125/0.375/0.625)
-    // sit halfway between adjacent encoded values:
-    //   0.0  → laneA=0, laneB=0   (visible under both modes)
-    //   0.25 → laneA=1, laneB=0   (background under old only)
-    //   0.5  → laneA=0, laneB=1   (background under new only)
-    //   0.75 → laneA=1, laneB=1   (background under both)
-    // Each side of the wipe applies its own lane's flag below so an entity visible under exactly one mode is
-    // correctly foregrounded on that side and backgrounded on the other — without the union "background wins"
-    // compromise that the previous single-flag scheme required.
-    float maskG = maskSample.g;
-    float bgLaneA = step(0.125, maskG) - step(0.375, maskG) + step(0.625, maskG);
-    float bgLaneB = step(0.375, maskG);
-    vec4 drawData = texture(entityDrawData, texCoord);
-    vec4 specular = texture(entitySpecular, texCoord);
-    int materialId = int(round(texture(entityMaterialId, texCoord).r * 255.0));
-
-    float dimFactor = 1.0 - max(blindness, darkness) * BLIB_FOG_AMOUNT;
-    vec3 srcDim = src * dimFactor;
-
-    // Category breakdown of the mask byte. Values written by BLibEntityShaderPatcher.Category, plus the special
-    // 0.875 "held item" written when BlibHeldItem is set during first-person hand or third-person ItemInHandLayer
-    // draws. Held-item fragments are routed through the background-entity branch so they blend with the world
-    // (dark blue thermal / dark green EM) instead of standing out as foreground entities — held items shouldn't
-    // give away your position in the predator vision.
-    //   0.875  = held item     → forced through world-coloring branch (treated as background)
-    //   1.000  = entity        → body heat + lighting (or world coloring if backgroundFlag set)
-    //   0.500  = terrain       → lighting only (no body heat)
-    //   0.250  = particle      → ambient block light only
-    //   0.0625 = celestial     → sun/moon texture recolored via heat gradient + ambient-sky fade
-    //   0.000  = sky/passthrough → ambient sky baseline only
-    bool isHeldItem = mask > 0.8125 && mask < 0.9375;
-
-    // Held items are always background (no IR / EM signature); force both lanes high regardless of mask.g so each
-    // side's coloring routes through the world branch in both computeThermal (catEntity zeroed → terrain heat
-    // formula) and computeEm (catEntity zeroed → emWorldColor).
-    float heldBoost = isHeldItem ? 1.0 : 0.0;
-    float effectiveBgOld = max(bgLaneA, heldBoost);
-    float effectiveBgNew = max(bgLaneB, heldBoost);
-
-    // Compute each side's coloring with its own per-lane flag — old uses laneA (right of wipe), new uses laneB
-    // (left of wipe). That's two extra computeThermal/computeEm calls compared to the old single-flag layout but
-    // it's the only way to give an entity that's visible under exactly one mode the right routing on each side
-    // simultaneously. When oldMode == newMode (no transition active) bgLaneA == bgLaneB and the two halves
-    // collapse to the same result, so the wipe short-circuits below.
-    vec3 thermalRgbOld = computeThermal(src, srcDim, mask, drawData, specular, materialId, dimFactor, effectiveBgOld);
-    vec3 emRgbOld = computeEm(src, srcDim, mask, drawData, dimFactor, effectiveBgOld);
-    vec3 oldRgb = selectMode(oldMode, srcDim, thermalRgbOld, emRgbOld);
-
-    vec3 thermalRgbNew = computeThermal(src, srcDim, mask, drawData, specular, materialId, dimFactor, effectiveBgNew);
-    vec3 emRgbNew = computeEm(src, srcDim, mask, drawData, dimFactor, effectiveBgNew);
-    vec3 newRgb = selectMode(newMode, srcDim, thermalRgbNew, emRgbNew);
-
-    if (oldMode == newMode) {
-        fragColor = vec4(oldRgb, 1.0);
-        return;
-    }
-
-    // BAND_HALF_WIDTH: half-thickness of the erosion band in normalized screen-X. 0.05 → band spans 10% of screen.
-    // Reasonably thick so the dislocation/red-tint/dissolve has room to develop visually as the line moves.
-    const float BAND_HALF_WIDTH = 0.05;
-    float distFromLine = texCoord.x - wipeLineX;
-
-    if (distFromLine > BAND_HALF_WIDTH) {
-        // Right of the band — pure old vision.
-        fragColor = vec4(oldRgb, 1.0);
-        return;
-    }
-
-    if (distFromLine < -BAND_HALF_WIDTH) {
-        // Left of the band — pure new vision.
-        fragColor = vec4(newRgb, 1.0);
-        return;
-    }
-
-    // Inside the band: erosion. phase = 0 just inside the right edge, 1 just inside the left edge.
-    float phase = (BAND_HALF_WIDTH - distFromLine) / (2.0 * BAND_HALF_WIDTH);
-
-    // Per-pixel deterministic noise: stable across frames so a given pixel always behaves the same way as the band
-    // sweeps over it. Two independent samples for 2D displacement direction.
-    float pixelNoise = fract(sin(dot(texCoord * vec2(343.0, 191.0), vec2(12.9898, 78.233))) * 43758.5453);
-    float pixelNoise2 = fract(sin(dot(texCoord * vec2(217.0, 451.0), vec2(45.164, 91.456))) * 21345.789);
-
-    // Dislocation: peaks in the middle of the band, smoothly tapers to 0 at the edges. The displaced sample comes
-    // from DiffuseSampler — the unaltered scene color. For REGULAR↔THERMAL that's the correct "old vision" source
-    // when going REGULAR→THERMAL; going THERMAL→REGULAR the displacement is technically against the wrong source,
-    // but the heavy red tint dominates the visible band so the discrepancy isn't noticeable.
-    float dislocateAmount = sin(phase * 3.14159) * 0.025;
-    vec2 displacedCoord = clamp(
-        texCoord + vec2(pixelNoise - 0.5, pixelNoise2 - 0.5) * dislocateAmount,
-        vec2(0.001), vec2(0.999)
-    );
-    vec3 displacedSrc = texture(DiffuseSampler, displacedCoord).rgb * dimFactor;
-
-    // Red tint envelope: 0 at the edges of the band, peaks at the middle. Pixels in the center of the band read as
-    // bright red ash; pixels just inside the right edge are barely tinted; pixels just inside the left edge are
-    // already dissolving (see step() below).
-    vec3 ashRed = vec3(1.0, 0.05, 0.02);
-    float redness = sin(phase * 3.14159) * 0.95;
-    vec3 ashy = mix(displacedSrc, ashRed, redness);
-
-    // Per-pixel dissolve: each pixel has a stable threshold; once phase exceeds the threshold, the pixel "dies"
-    // and is replaced with the new vision. Low-noise pixels die early, high-noise pixels survive longer — the
-    // result is a granular, stippled erosion frontier rather than a hard edge.
-    float dissolved = step(pixelNoise, phase);
-    vec3 finalRgb = mix(ashy, newRgb, dissolved);
-
-    fragColor = vec4(finalRgb, 1.0);
-}
+// NOTE (glsl-processor compat): these three functions used to be FORWARD-DECLARED here with their bodies at the
+// bottom, so main() read top-down. Veil 4.x recompiles every vanilla-pipeline shader through glsl-processor, and
+// that library (0.2.3) parses a bare prototype into a function node with a NULL body, then NPEs writing it back
+// ("GlslNodeList.iterator() ... this.body is null" — the white-screen chain: skipped shader -> GL_INVALID_OPERATION
+// flood -> minimap GL-error check crashes -> white screen). GLSL needs no prototypes when definitions precede use,
+// so the bodies now sit here, above main(). Do not reintroduce forward declarations in any BLib post shader.
 
 vec3 computeThermal(vec3 src, vec3 srcDim, float mask, vec4 drawData, vec4 specular, int materialId, float dimFactor, float backgroundFlag) {
     // Held items: render uniformly as cold-zone background regardless of position lighting (no IR signature). Mirrors
@@ -407,3 +294,119 @@ vec3 selectMode(int mode, vec3 srcDim, vec3 thermalRgb, vec3 emRgb) {
     if (mode == MODE_ELECTROMAGNETIC) return emRgb;
     return srcDim;
 }
+
+void main() {
+    vec3 src = texture(DiffuseSampler, texCoord).rgb;
+    vec2 maskSample = texture(entityMask, texCoord).rg;
+    float mask = maskSample.r;
+    // mask.g packs two background-entity lanes from BLib: lane A (oldMode side of the wipe) contributes 0.25, lane
+    // B (newMode side) contributes 0.5. The four combinations land at exactly 0.0/0.25/0.5/0.75 under NEAREST
+    // sampling of the RG8 attachment. Decoding via step() pairs cleanly because the thresholds (0.125/0.375/0.625)
+    // sit halfway between adjacent encoded values:
+    //   0.0  → laneA=0, laneB=0   (visible under both modes)
+    //   0.25 → laneA=1, laneB=0   (background under old only)
+    //   0.5  → laneA=0, laneB=1   (background under new only)
+    //   0.75 → laneA=1, laneB=1   (background under both)
+    // Each side of the wipe applies its own lane's flag below so an entity visible under exactly one mode is
+    // correctly foregrounded on that side and backgrounded on the other — without the union "background wins"
+    // compromise that the previous single-flag scheme required.
+    float maskG = maskSample.g;
+    float bgLaneA = step(0.125, maskG) - step(0.375, maskG) + step(0.625, maskG);
+    float bgLaneB = step(0.375, maskG);
+    vec4 drawData = texture(entityDrawData, texCoord);
+    vec4 specular = texture(entitySpecular, texCoord);
+    int materialId = int(round(texture(entityMaterialId, texCoord).r * 255.0));
+
+    float dimFactor = 1.0 - max(blindness, darkness) * BLIB_FOG_AMOUNT;
+    vec3 srcDim = src * dimFactor;
+
+    // Category breakdown of the mask byte. Values written by BLibEntityShaderPatcher.Category, plus the special
+    // 0.875 "held item" written when BlibHeldItem is set during first-person hand or third-person ItemInHandLayer
+    // draws. Held-item fragments are routed through the background-entity branch so they blend with the world
+    // (dark blue thermal / dark green EM) instead of standing out as foreground entities — held items shouldn't
+    // give away your position in the predator vision.
+    //   0.875  = held item     → forced through world-coloring branch (treated as background)
+    //   1.000  = entity        → body heat + lighting (or world coloring if backgroundFlag set)
+    //   0.500  = terrain       → lighting only (no body heat)
+    //   0.250  = particle      → ambient block light only
+    //   0.0625 = celestial     → sun/moon texture recolored via heat gradient + ambient-sky fade
+    //   0.000  = sky/passthrough → ambient sky baseline only
+    bool isHeldItem = mask > 0.8125 && mask < 0.9375;
+
+    // Held items are always background (no IR / EM signature); force both lanes high regardless of mask.g so each
+    // side's coloring routes through the world branch in both computeThermal (catEntity zeroed → terrain heat
+    // formula) and computeEm (catEntity zeroed → emWorldColor).
+    float heldBoost = isHeldItem ? 1.0 : 0.0;
+    float effectiveBgOld = max(bgLaneA, heldBoost);
+    float effectiveBgNew = max(bgLaneB, heldBoost);
+
+    // Compute each side's coloring with its own per-lane flag — old uses laneA (right of wipe), new uses laneB
+    // (left of wipe). That's two extra computeThermal/computeEm calls compared to the old single-flag layout but
+    // it's the only way to give an entity that's visible under exactly one mode the right routing on each side
+    // simultaneously. When oldMode == newMode (no transition active) bgLaneA == bgLaneB and the two halves
+    // collapse to the same result, so the wipe short-circuits below.
+    vec3 thermalRgbOld = computeThermal(src, srcDim, mask, drawData, specular, materialId, dimFactor, effectiveBgOld);
+    vec3 emRgbOld = computeEm(src, srcDim, mask, drawData, dimFactor, effectiveBgOld);
+    vec3 oldRgb = selectMode(oldMode, srcDim, thermalRgbOld, emRgbOld);
+
+    vec3 thermalRgbNew = computeThermal(src, srcDim, mask, drawData, specular, materialId, dimFactor, effectiveBgNew);
+    vec3 emRgbNew = computeEm(src, srcDim, mask, drawData, dimFactor, effectiveBgNew);
+    vec3 newRgb = selectMode(newMode, srcDim, thermalRgbNew, emRgbNew);
+
+    if (oldMode == newMode) {
+        fragColor = vec4(oldRgb, 1.0);
+        return;
+    }
+
+    // BAND_HALF_WIDTH: half-thickness of the erosion band in normalized screen-X. 0.05 → band spans 10% of screen.
+    // Reasonably thick so the dislocation/red-tint/dissolve has room to develop visually as the line moves.
+    const float BAND_HALF_WIDTH = 0.05;
+    float distFromLine = texCoord.x - wipeLineX;
+
+    if (distFromLine > BAND_HALF_WIDTH) {
+        // Right of the band — pure old vision.
+        fragColor = vec4(oldRgb, 1.0);
+        return;
+    }
+
+    if (distFromLine < -BAND_HALF_WIDTH) {
+        // Left of the band — pure new vision.
+        fragColor = vec4(newRgb, 1.0);
+        return;
+    }
+
+    // Inside the band: erosion. phase = 0 just inside the right edge, 1 just inside the left edge.
+    float phase = (BAND_HALF_WIDTH - distFromLine) / (2.0 * BAND_HALF_WIDTH);
+
+    // Per-pixel deterministic noise: stable across frames so a given pixel always behaves the same way as the band
+    // sweeps over it. Two independent samples for 2D displacement direction.
+    float pixelNoise = fract(sin(dot(texCoord * vec2(343.0, 191.0), vec2(12.9898, 78.233))) * 43758.5453);
+    float pixelNoise2 = fract(sin(dot(texCoord * vec2(217.0, 451.0), vec2(45.164, 91.456))) * 21345.789);
+
+    // Dislocation: peaks in the middle of the band, smoothly tapers to 0 at the edges. The displaced sample comes
+    // from DiffuseSampler — the unaltered scene color. For REGULAR↔THERMAL that's the correct "old vision" source
+    // when going REGULAR→THERMAL; going THERMAL→REGULAR the displacement is technically against the wrong source,
+    // but the heavy red tint dominates the visible band so the discrepancy isn't noticeable.
+    float dislocateAmount = sin(phase * 3.14159) * 0.025;
+    vec2 displacedCoord = clamp(
+        texCoord + vec2(pixelNoise - 0.5, pixelNoise2 - 0.5) * dislocateAmount,
+        vec2(0.001), vec2(0.999)
+    );
+    vec3 displacedSrc = texture(DiffuseSampler, displacedCoord).rgb * dimFactor;
+
+    // Red tint envelope: 0 at the edges of the band, peaks at the middle. Pixels in the center of the band read as
+    // bright red ash; pixels just inside the right edge are barely tinted; pixels just inside the left edge are
+    // already dissolving (see step() below).
+    vec3 ashRed = vec3(1.0, 0.05, 0.02);
+    float redness = sin(phase * 3.14159) * 0.95;
+    vec3 ashy = mix(displacedSrc, ashRed, redness);
+
+    // Per-pixel dissolve: each pixel has a stable threshold; once phase exceeds the threshold, the pixel "dies"
+    // and is replaced with the new vision. Low-noise pixels die early, high-noise pixels survive longer — the
+    // result is a granular, stippled erosion frontier rather than a hard edge.
+    float dissolved = step(pixelNoise, phase);
+    vec3 finalRgb = mix(ashy, newRgb, dissolved);
+
+    fragColor = vec4(finalRgb, 1.0);
+}
+
