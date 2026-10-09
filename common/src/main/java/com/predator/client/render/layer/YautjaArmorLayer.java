@@ -4,6 +4,7 @@ import com.blib.api.client.model.v1.AzBone;
 import com.blib.api.client.render.v1.AzRendererPipelineContext;
 import com.blib.api.client.render.v1.layer.AzRenderLayer;
 import com.predator.PredatorResources;
+import com.predator.client.cloak.PredatorCloakRendering;
 import com.predator.common.gameplay.entity.living.yautja.Yautja;
 import com.predator.common.gameplay.entity.living.yautja.YautjaArmorVariant;
 import net.minecraft.client.Minecraft;
@@ -57,6 +58,13 @@ public class YautjaArmorLayer<T extends Yautja> implements AzRenderLayer<UUID, T
             ? TRANSLUCENT_BY_VARIANT.computeIfAbsent(armorVariant, v -> RenderType.entityTranslucentCull(armorTexture(v)))
             : CUTOUT_BY_VARIANT.computeIfAbsent(armorVariant, v -> RenderType.entityCutout(armorTexture(v)));
         var vertexConsumer = context.multiBufferSource().getBuffer(renderType);
+
+        // A concealed (cloaked) yautja's buffer source drops armour passes outright, so re-rendering the whole model
+        // into it is pure waste - that re-render was ~7% of the frame with a group of cloaked yautja on screen.
+        if (PredatorCloakRendering.isDiscarded(vertexConsumer)) {
+            return;
+        }
+
         var alphaValue = animatable.isInvisibleTo(localPlayer) ? 0 : 0.38;
         int color;
 
@@ -67,10 +75,19 @@ public class YautjaArmorLayer<T extends Yautja> implements AzRenderLayer<UUID, T
             color = FALLBACK_COLOR;
         }
 
+        var previousColor = context.renderColor();
+        var previousConsumer = context.vertexConsumer();
+
         context.setRenderColor(color);
         context.setVertexConsumer(vertexConsumer);
 
-        renderPipeline.reRender(context);
+        try {
+            renderPipeline.reRender(context);
+        } finally {
+            // Leave the context as later layers expect it.
+            context.setRenderColor(previousColor);
+            context.setVertexConsumer(previousConsumer);
+        }
     }
 
     @Override

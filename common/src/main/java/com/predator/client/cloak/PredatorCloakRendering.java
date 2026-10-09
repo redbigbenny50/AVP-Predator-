@@ -108,6 +108,9 @@ public final class PredatorCloakRendering {
      */
     private static final int RIPPLE_TINT = 255;
 
+    /** Packed light for full brightness: block 240, sky 240 (same as {@code setUv2(240, 240)}). */
+    private static final int FULL_BRIGHT = 240 << 16 | 240;
+
     private PredatorCloakRendering() {
         throw new UnsupportedOperationException();
     }
@@ -279,8 +282,8 @@ public final class PredatorCloakRendering {
                 wrapDiag(entity, "REFRACTING");
                 return new RefractingBufferSource(
                     original,
-                    RenderType.entityNoOutline(PredatorSceneColor.LOCATION),
-                    RenderType.entityNoOutline(bodyTexture),
+                    PredatorCloakRenderTypes.noOutline(PredatorSceneColor.LOCATION),
+                    PredatorCloakRenderTypes.noOutline(bodyTexture),
                     bodyTexture,
                     (float) (entity.getX() - camera.x),
                     (float) (entity.getY() + entity.getBbHeight() * 0.5 - camera.y),
@@ -298,7 +301,7 @@ public final class PredatorCloakRendering {
         //
         // Losing the glow-outline pass is a non-issue here; a cloaked entity should not be drawing an outline.
         wrapDiag(entity, texture == null ? "NO_BODY_TEXTURE" : "CONCEALED");
-        return texture == null ? original : new ConcealedBufferSource(original, RenderType.entityNoOutline(texture), texture);
+        return texture == null ? original : new ConcealedBufferSource(original, PredatorCloakRenderTypes.noOutline(texture), texture);
     }
 
     /**
@@ -525,7 +528,37 @@ public final class PredatorCloakRendering {
 
     public static void beginEntity(Entity entity) {
         PENDING_REPLAYS.clear();
+
+        // Recorders holding deferred lanes stay reserved until the level flush; otherwise the pool is free again.
+        if (DEFERRED_REPLAYS.isEmpty()) {
+            recordersInUse = 0;
+        }
+
         currentEntity = entity;
+        cloakTime = computeCloakTime();
+    }
+
+    /**
+     * {@code (gameTime % 24000) + partialTick}, captured once per entity in {@link #beginEntity}. The vertex consumers
+     * used to read this from the level for EVERY vertex - {@code Level#getGameTime} alone was 13% of the render thread
+     * with a group of cloaked yautja on screen. It cannot change within one entity's render, so once is exact.
+     */
+    private static float cloakTime;
+
+    private static float computeCloakTime() {
+        var minecraft = Minecraft.getInstance();
+        var level = minecraft.level;
+        return level == null
+            ? 0.0F
+            : (float) (level.getGameTime() % 24000L) + minecraft.getTimer().getGameTimeDeltaPartialTick(false);
+    }
+
+    /**
+     * {@return whether {@code consumer} is the cloak's discard sink}, i.e. everything written to it is dropped. Lets a
+     * layer skip a whole re-render whose output the cloak would throw away (see {@code YautjaArmorLayer}).
+     */
+    public static boolean isDiscarded(VertexConsumer consumer) {
+        return consumer == NoOpVertexConsumer.INSTANCE;
     }
 
     /**
@@ -566,10 +599,20 @@ public final class PredatorCloakRendering {
 
     private static long lastDiagMillis;
 
+    /** Replay order for deferred lanes: back to front, the same order the wrap sites register them in. */
+    private static final int LANE_SCENE = 0;
+
+    private static final int LANE_SILHOUETTE = 1;
+
+    private static final int LANE_OVERLAY = 2;
+
+    private static final int LANE_COUNT = 3;
+
     private record PendingReplay(
         RecordingVertexConsumer recorder,
         MultiBufferSource delegate,
-        RenderType renderType
+        RenderType renderType,
+        int lane
     ) {}
 
     /**
@@ -577,13 +620,37 @@ public final class PredatorCloakRendering {
      * everything else, hands back the delegate's buffer directly — the original wiring. See the routing note above
      * {@link #wrap}.
      */
-    private static VertexConsumer recordFor(MultiBufferSource delegate, RenderType renderType) {
+    private static VertexConsumer recordFor(MultiBufferSource delegate, RenderType renderType, int lane) {
         if (!replayLanesForCurrentEntity) {
             return delegate.getBuffer(renderType);
         }
 
-        var recorder = new RecordingVertexConsumer();
-        PENDING_REPLAYS.add(new PendingReplay(recorder, delegate, renderType));
+        var recorder = acquireRecorder();
+        PENDING_REPLAYS.add(new PendingReplay(recorder, delegate, renderType, lane));
+        return recorder;
+    }
+
+    /**
+     * Recorders are reused across entities and frames so their arrays keep the capacity they grew to. A fresh recorder
+     * per lane per entity started at 64 vertices and doubled its way up every time - that copying was ~11% of the
+     * render thread on its own. Render-thread only; released in {@link #endEntity()} / {@link #beginEntity}.
+     */
+    private static final java.util.List<RecordingVertexConsumer> RECORDER_POOL = new java.util.ArrayList<>();
+
+    private static int recordersInUse;
+
+    private static RecordingVertexConsumer acquireRecorder() {
+        RecordingVertexConsumer recorder;
+
+        if (recordersInUse < RECORDER_POOL.size()) {
+            recorder = RECORDER_POOL.get(recordersInUse);
+            recorder.reset();
+        } else {
+            recorder = new RecordingVertexConsumer();
+            RECORDER_POOL.add(recorder);
+        }
+
+        recordersInUse++;
         return recorder;
     }
 
@@ -595,7 +662,7 @@ public final class PredatorCloakRendering {
 
         private static final int FLOATS_PER_VERTEX = 11;
 
-        private float[] data = new float[FLOATS_PER_VERTEX * 64];
+        private float[] data = new float[FLOATS_PER_VERTEX * 1024];
 
         private int vertexCount;
 
@@ -683,6 +750,52 @@ public final class PredatorCloakRendering {
             open = false;
         }
 
+        void reset() {
+            vertexCount = 0;
+            open = false;
+        }
+
+        /**
+         * Whole-vertex fast path: writes straight into the array, skipping the open-vertex staging and six setter
+         * calls. The cloak consumers always hand their recorder complete vertices through this overload.
+         */
+        @Override
+        public void addVertex(
+            float x,
+            float y,
+            float z,
+            int color,
+            float u,
+            float v,
+            int packedOverlay,
+            int packedLight,
+            float normalX,
+            float normalY,
+            float normalZ
+        ) {
+            commit();
+
+            var base = vertexCount * FLOATS_PER_VERTEX;
+
+            if (data.length < base + FLOATS_PER_VERTEX) {
+                data = java.util.Arrays.copyOf(data, data.length * 2);
+            }
+
+            var data = this.data;
+            data[base] = x;
+            data[base + 1] = y;
+            data[base + 2] = z;
+            data[base + 3] = Float.intBitsToFloat(color);
+            data[base + 4] = u;
+            data[base + 5] = v;
+            data[base + 6] = Float.intBitsToFloat(packedOverlay);
+            data[base + 7] = Float.intBitsToFloat(packedLight);
+            data[base + 8] = normalX;
+            data[base + 9] = normalY;
+            data[base + 10] = normalZ;
+            vertexCount++;
+        }
+
         /* package-private */ int recordedVertexCount() {
             commit();
             return vertexCount;
@@ -692,12 +805,21 @@ public final class PredatorCloakRendering {
             commit();
             for (var i = 0; i < vertexCount; i++) {
                 var base = i * FLOATS_PER_VERTEX;
-                target.addVertex(data[base], data[base + 1], data[base + 2])
-                    .setColor(Float.floatToRawIntBits(data[base + 3]))
-                    .setUv(data[base + 4], data[base + 5])
-                    .setOverlay(Float.floatToRawIntBits(data[base + 6]))
-                    .setLight(Float.floatToRawIntBits(data[base + 7]))
-                    .setNormal(data[base + 8], data[base + 9], data[base + 10]);
+                // The single-call overload: BufferBuilder writes the whole vertex in one go on its fast path, instead
+                // of six chained calls that each re-check the element being written.
+                target.addVertex(
+                    data[base],
+                    data[base + 1],
+                    data[base + 2],
+                    Float.floatToRawIntBits(data[base + 3]),
+                    data[base + 4],
+                    data[base + 5],
+                    Float.floatToRawIntBits(data[base + 6]),
+                    Float.floatToRawIntBits(data[base + 7]),
+                    data[base + 8],
+                    data[base + 9],
+                    data[base + 10]
+                );
             }
         }
     }
@@ -727,6 +849,16 @@ public final class PredatorCloakRendering {
             );
         }
 
+        // Inside the level's entity pass, hold the lanes and replay every cloaked entity's lanes together at the
+        // flush point (see flushDeferredReplays). Anywhere else - previews, entities drawn after the flush point,
+        // or if the LevelRenderer hooks never ran - replay right away, exactly as before.
+        if (canDefer()) {
+            DEFERRED_REPLAYS.addAll(PENDING_REPLAYS);
+            PENDING_REPLAYS.clear();
+            currentEntity = null;
+            return;
+        }
+
         // Replay in registration order — back-to-front by construction of the wrap sites — through the ORIGINAL
         // source, one type at a time. See the design note above.
         for (var pending : PENDING_REPLAYS) {
@@ -743,8 +875,135 @@ public final class PredatorCloakRendering {
             }
         }
         PENDING_REPLAYS.clear();
+
+        if (DEFERRED_REPLAYS.isEmpty()) {
+            recordersInUse = 0;
+        }
+
         currentEntity = null;
     }
+
+    // ------------------------------------------------------------------------------------------------------------
+    // Cross-entity batching
+    // ------------------------------------------------------------------------------------------------------------
+
+    /**
+     * ⚠ Oct 9 — WHY THE LANES ARE HELD. Every cloak lane is a translucent render type outside vanilla's fixed map, so
+     * each one goes through the buffer source's single shared builder, and every switch to a different type ends the
+     * previous batch - which SORTS it. Replaying per entity meant three sorted batches per cloaked yautja (scene,
+     * silhouette, ripple): the sort alone was ~26% of the render thread with a group on screen.
+     * <p>
+     * Now the lanes of every cloaked entity are held until the level renderer finishes the entity pass, then replayed
+     * lane by lane - all scenes, then all silhouettes, then all overlays - with one {@code getBuffer} per render type.
+     * That is one sorted batch per type per frame instead of three per entity, and it still goes through the ORIGINAL
+     * source one type at a time, so the single-builder rule the replay design exists for still holds.
+     * <p>
+     * Hooks: {@code MixinLevelRenderer_CloakBatch} calls {@link #beginLevelFrame} at the head of
+     * {@code LevelRenderer#renderLevel}, {@link #flushDeferredReplays} where the block-entity pass starts, and
+     * {@link #endLevelFrame} on return. If those hooks don't run (another mod rewrote the method), {@link #canDefer}
+     * stays false and the old immediate replay is used.
+     */
+    private static final java.util.List<PendingReplay> DEFERRED_REPLAYS = new java.util.ArrayList<>();
+
+    /** Between the head of renderLevel and the flush point: entities finishing now can be deferred. */
+    private static boolean deferWindowOpen;
+
+    /** Set if a level frame ended with lanes still held - the flush hook isn't firing, so stop deferring. */
+    private static boolean deferralDisabled;
+
+    private static boolean canDefer() {
+        return deferWindowOpen && !deferralDisabled && !PENDING_REPLAYS.isEmpty();
+    }
+
+    /** Head of {@code LevelRenderer#renderLevel}. */
+    public static void beginLevelFrame() {
+        if (!DEFERRED_REPLAYS.isEmpty()) {
+            // Left over from a frame whose flush/return hooks did not run. Never replay last frame's geometry into
+            // this frame; drop it and fall back to immediate replay.
+            disableDeferral("held cloak lanes survived into the next frame");
+        }
+
+        deferWindowOpen = !deferralDisabled;
+    }
+
+    /** Where {@code LevelRenderer#renderLevel} moves from entities to block entities. */
+    public static void flushDeferredReplays() {
+        deferWindowOpen = false;
+
+        if (DEFERRED_REPLAYS.isEmpty()) {
+            return;
+        }
+
+        var diagThisFlush = CLOAK_DIAG && System.currentTimeMillis() - lastFlushDiagMillis > 1000L;
+        var batches = 0;
+
+        // Lane by lane (back to front), and within a lane one getBuffer per (source, render type): every recording
+        // for that type is written into the one open batch before the next type is requested.
+        for (var lane = 0; lane < LANE_COUNT; lane++) {
+            for (var i = 0; i < DEFERRED_REPLAYS.size(); i++) {
+                var first = DEFERRED_REPLAYS.get(i);
+
+                if (first == null || first.lane() != lane) {
+                    continue;
+                }
+
+                var delegate = first.delegate();
+                var renderType = first.renderType();
+                var buffer = delegate.getBuffer(renderType);
+                batches++;
+
+                for (var j = i; j < DEFERRED_REPLAYS.size(); j++) {
+                    var pending = DEFERRED_REPLAYS.get(j);
+
+                    if (
+                        pending != null && pending.lane() == lane && pending.renderType() == renderType
+                            && pending.delegate() == delegate
+                    ) {
+                        pending.recorder().replayTo(buffer);
+                        DEFERRED_REPLAYS.set(j, null);
+                    }
+                }
+            }
+        }
+
+        if (diagThisFlush) {
+            lastFlushDiagMillis = System.currentTimeMillis();
+            com.predator.Predator.LOGGER.info(
+                "[CloakDiag] flushed {} held lanes in {} batches, glError={}",
+                DEFERRED_REPLAYS.size(),
+                batches,
+                com.mojang.blaze3d.platform.GlStateManager._getError()
+            );
+        }
+
+        DEFERRED_REPLAYS.clear();
+        recordersInUse = 0;
+    }
+
+    /** Return of {@code LevelRenderer#renderLevel}. */
+    public static void endLevelFrame() {
+        deferWindowOpen = false;
+
+        if (!DEFERRED_REPLAYS.isEmpty()) {
+            // The batches have already been drawn for this frame; replaying now would land in NEXT frame's draw.
+            disableDeferral("the flush hook did not run before renderLevel returned");
+        }
+    }
+
+    private static void disableDeferral(String reason) {
+        DEFERRED_REPLAYS.clear();
+        recordersInUse = 0;
+
+        if (!deferralDisabled) {
+            deferralDisabled = true;
+            com.predator.Predator.LOGGER.warn(
+                "[Cloak] Cross-entity cloak batching disabled ({}); falling back to per-entity replay.",
+                reason
+            );
+        }
+    }
+
+    private static long lastFlushDiagMillis;
 
     /**
      * Set while a HELD ITEM is being drawn, so the cloak leaves it alone.
@@ -804,7 +1063,7 @@ public final class PredatorCloakRendering {
      * Motion comes from the pulse modulating alpha per vertex, not from a scrolling texture matrix.
      */
     private static RenderType rippleOverlay() {
-        return RenderType.entityNoOutline(RIPPLE_TEXTURE);
+        return PredatorCloakRenderTypes.noOutline(RIPPLE_TEXTURE);
     }
 
     private static RenderType energySwirl() {
@@ -854,8 +1113,8 @@ public final class PredatorCloakRendering {
             // ⚠ Both types are outside vanilla's fixed map — pulled from private lanes so their builders
             // can be open simultaneously. See the lane doc above endEntity().
             return com.mojang.blaze3d.vertex.VertexMultiConsumer.create(
-                new SilhouetteVertexConsumer(recordFor(delegate, cloakType)),
-                new RippleVertexConsumer(recordFor(delegate, rippleOverlay()))
+                new SilhouetteVertexConsumer(recordFor(delegate, cloakType, LANE_SILHOUETTE)),
+                new RippleVertexConsumer(recordFor(delegate, rippleOverlay(), LANE_OVERLAY))
             );
         }
     }
@@ -880,7 +1139,7 @@ public final class PredatorCloakRendering {
 
             // ⚠ The body keeps the game's source (its batching and layer order are vanilla's business); only
             // the added swirl moves to a private lane so it cannot end the body's fallback builder mid-wrap.
-            var swirl = recordFor(delegate, energySwirl());
+            var swirl = recordFor(delegate, energySwirl(), LANE_OVERLAY);
             return com.mojang.blaze3d.vertex.VertexMultiConsumer.create(normal, swirl);
         }
     }
@@ -946,10 +1205,10 @@ public final class PredatorCloakRendering {
             // Each pulls from its own lane; endEntity() flushes scene, then silhouette, then ripple.
             return com.mojang.blaze3d.vertex.VertexMultiConsumer.create(
                 com.mojang.blaze3d.vertex.VertexMultiConsumer.create(
-                    new RefractionVertexConsumer(recordFor(delegate, sceneType), originX, originY, originZ),
-                    new SilhouetteVertexConsumer(recordFor(delegate, outlineType))
+                    new RefractionVertexConsumer(recordFor(delegate, sceneType, LANE_SCENE), originX, originY, originZ),
+                    new SilhouetteVertexConsumer(recordFor(delegate, outlineType, LANE_SILHOUETTE))
                 ),
-                new RippleVertexConsumer(recordFor(delegate, rippleOverlay()))
+                new RippleVertexConsumer(recordFor(delegate, rippleOverlay(), LANE_OVERLAY))
             );
         }
     }
@@ -1000,9 +1259,14 @@ public final class PredatorCloakRendering {
 
         private static final int TINT = 255;
 
+        private static final int REFRACTION_COLOR = REFRACTION_ALPHA << 24 | TINT << 16 | TINT << 8 | TINT;
+
         private final VertexConsumer delegate;
 
         private final float time;
+
+        /** {@code projection * modelView}, combined once here instead of two matrix products per vertex. */
+        private final float m00, m10, m20, m30, m01, m11, m21, m31, m03, m13, m23, m33;
 
         private final float centreU;
 
@@ -1021,19 +1285,27 @@ public final class PredatorCloakRendering {
 
             // Project the wearer's own centre once per frame. Everything lenses radially away from this point,
             // which is what makes it read as a lens over a body rather than a general screen wobble.
-            var projectedCentre = new Vector4f(originX, originY, originZ, 1.0F)
-                .mul(RenderSystem.getModelViewMatrix())
-                .mul(RenderSystem.getProjectionMatrix());
+            // v.mul(modelView).mul(projection) == (projection * modelView) * v
+            var combined = new org.joml.Matrix4f(RenderSystem.getProjectionMatrix()).mul(RenderSystem.getModelViewMatrix());
+            this.m00 = combined.m00();
+            this.m10 = combined.m10();
+            this.m20 = combined.m20();
+            this.m30 = combined.m30();
+            this.m01 = combined.m01();
+            this.m11 = combined.m11();
+            this.m21 = combined.m21();
+            this.m31 = combined.m31();
+            this.m03 = combined.m03();
+            this.m13 = combined.m13();
+            this.m23 = combined.m23();
+            this.m33 = combined.m33();
+
+            var projectedCentre = combined.transform(new Vector4f(originX, originY, originZ, 1.0F));
             var centreW = projectedCentre.w <= 0.0F ? 0.0001F : projectedCentre.w;
             this.centreU = projectedCentre.x / centreW * 0.5F + 0.5F;
             this.centreV = projectedCentre.y / centreW * 0.5F + 0.5F;
 
-            var minecraft = Minecraft.getInstance();
-            var level = minecraft.level;
-            this.time = level == null
-                ? 0.0F
-                : ((float) (level.getGameTime() % 24000L)
-                    + minecraft.getTimer().getGameTimeDeltaPartialTick(false)) * RIPPLE_SPEED;
+            this.time = cloakTime * RIPPLE_SPEED;
         }
 
         @Override
@@ -1055,24 +1327,23 @@ public final class PredatorCloakRendering {
             // the rotation lives entirely in the modelview matrix and is applied on the GPU. Projecting without it
             // threw every UV far outside 0..1, they all clamped to the same screen corner, and the body rendered as
             // one flat colour — whatever happened to be in that corner, usually sky.
-            var projected = new Vector4f(x, y, z, 1.0F)
-                .mul(RenderSystem.getModelViewMatrix())
-                .mul(RenderSystem.getProjectionMatrix());
+            // Only x, y and w of the clip-space position are needed; z is never used.
+            var projectedX = m00 * x + m10 * y + m20 * z + m30;
+            var projectedY = m01 * x + m11 * y + m21 * z + m31;
+            var projectedW = m03 * x + m13 * y + m23 * z + m33;
 
             // ⚠ NEVER skip a vertex. Returning early here left the quad short: the paired consumer in the
             // VertexMultiConsumer wrote its vertex and this one did not, so the BufferBuilder desynchronised and threw
             // "Not building!" mid-quad. A degenerate vertex is always better than a missing one.
-            var safeW = projected.w <= 0.0F ? 0.0001F : projected.w;
-            var screenU = projected.x / safeW * 0.5F + 0.5F;
+            var safeW = projectedW <= 0.0F ? 0.0001F : projectedW;
+            var screenU = projectedX / safeW * 0.5F + 0.5F;
             // ⚠ V is NOT flipped. The scene copy comes from glCopyTexSubImage2D off the framebuffer, and GL texture
             // space has its origin at the BOTTOM-left — so it is already stored the same way up as the framebuffer.
             // Using the screen-space convention (0.5 - y) mirrored every sample vertically: angling the camera DOWN
             // sampled the top of the frame, which is sky, and painted the wearer sky-blue. It also meant the lens was
             // bowing a mirrored image, so the distortion never lined up with the body and read as absent.
-            var screenV = projected.y / safeW * 0.5F + 0.5F;
+            var screenV = projectedY / safeW * 0.5F + 0.5F;
 
-            delegate.addVertex(x, y, z);
-            delegate.setColor(TINT, TINT, TINT, REFRACTION_ALPHA);
             // The ripple. Phase is driven by the vertex's own position so different parts of the body wobble out of
             // step with each other — that is what reads as a surface rather than the whole shape sliding about. The
             // two axes use different multipliers so the motion never collapses into a straight diagonal.
@@ -1088,14 +1359,21 @@ public final class PredatorCloakRendering {
             var radius = (float) Math.sqrt(lensU * lensU + lensV * lensV);
             var lens = LENS_STRENGTH * Math.min(1.0F, radius / LENS_RADIUS);
 
-            delegate.setUv(
+            // One whole-vertex call (the recorder's fast path). Full-bright light: the scene copy is already lit, so
+            // lighting it again would darken it wrongly.
+            delegate.addVertex(
+                x,
+                y,
+                z,
+                REFRACTION_COLOR,
                 clamp(screenU + normalX * REFRACTION_STRENGTH + rippleU + lensU * lens),
-                clamp(screenV + normalY * REFRACTION_STRENGTH + rippleV + lensV * lens)
+                clamp(screenV + normalY * REFRACTION_STRENGTH + rippleV + lensV * lens),
+                packedOverlay,
+                FULL_BRIGHT,
+                normalX,
+                normalY,
+                normalZ
             );
-            delegate.setUv1(packedOverlay & 0xFFFF, packedOverlay >> 16 & 0xFFFF);
-            // Full-bright: the scene copy is already lit, so lighting it again would darken it wrongly.
-            delegate.setUv2(240, 240);
-            delegate.setNormal(normalX, normalY, normalZ);
         }
 
         private static float clamp(float value) {
@@ -1183,12 +1461,7 @@ public final class PredatorCloakRendering {
             float normalY,
             float normalZ
         ) {
-            var minecraft = Minecraft.getInstance();
-            var level = minecraft.level;
-            var time = level == null
-                ? 0.0F
-                : ((float) (level.getGameTime() % 24000L)
-                    + minecraft.getTimer().getGameTimeDeltaPartialTick(false)) * 1.90F;
+            var time = cloakTime * 1.90F;
 
             // ⚠ Wavelength is deliberately LONGER than the body (frequency 0.9 ≈ 7 blocks per cycle). At 2.2 a full
             // cycle spanned under 3 blocks, so each limb and the head each caught their own crest and it read as parts
@@ -1205,12 +1478,19 @@ public final class PredatorCloakRendering {
             var wave = Mth.sin(y * 2.6F + time) * 0.5F + 0.5F;
             var alpha = Math.max(1, Math.round(RIPPLE_ALPHA * effectIntensityForCurrentEntity * (0.35F + 0.65F * wave)));
 
-            delegate.addVertex(x, y, z);
-            delegate.setColor(RIPPLE_TINT, RIPPLE_TINT, RIPPLE_TINT, alpha);
-            delegate.setUv(u, v);
-            delegate.setUv1(packedOverlay & 0xFFFF, packedOverlay >> 16 & 0xFFFF);
-            delegate.setUv2(240, 240);
-            delegate.setNormal(normalX, normalY, normalZ);
+            delegate.addVertex(
+                x,
+                y,
+                z,
+                alpha << 24 | RIPPLE_TINT << 16 | RIPPLE_TINT << 8 | RIPPLE_TINT,
+                u,
+                v,
+                packedOverlay,
+                FULL_BRIGHT,
+                normalX,
+                normalY,
+                normalZ
+            );
         }
 
         @Override
@@ -1396,12 +1676,7 @@ public final class PredatorCloakRendering {
             float normalY,
             float normalZ
         ) {
-            var minecraft = Minecraft.getInstance();
-            var level = minecraft.level;
-            var time = level == null
-                ? 0.0F
-                : ((float) (level.getGameTime() % 24000L)
-                    + minecraft.getTimer().getGameTimeDeltaPartialTick(false)) * PULSE_SPEED;
+            var time = cloakTime * PULSE_SPEED;
 
             // Downward travel: adding time to a Y-driven phase moves the crest toward lower Y as time advances.
             // Only a slight breath here. The visible shimmer is the additive ripple pass; modulating the silhouette
@@ -1410,12 +1685,7 @@ public final class PredatorCloakRendering {
             var scale = PULSE_FLOOR + (1.0F - PULSE_FLOOR) * wave;
             var alpha = Math.max(1, Math.round(SILHOUETTE_ALPHA * effectIntensityForCurrentEntity * scale));
 
-            delegate.addVertex(x, y, z);
-            delegate.setColor(255, 255, 255, alpha);
-            delegate.setUv(u, v);
-            delegate.setUv1(packedOverlay & 0xFFFF, packedOverlay >> 16 & 0xFFFF);
-            delegate.setUv2(packedLight & 0xFFFF, packedLight >> 16 & 0xFFFF);
-            delegate.setNormal(normalX, normalY, normalZ);
+            delegate.addVertex(x, y, z, alpha << 24 | 0xFFFFFF, u, v, packedOverlay, packedLight, normalX, normalY, normalZ);
         }
 
         @Override
