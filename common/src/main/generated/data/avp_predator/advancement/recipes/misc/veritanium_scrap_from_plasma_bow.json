@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_plasma_bow": {
+      "conditions": {
+        "items": [
+          {
+            "items": "avp_predator:plasma_bow"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "avp_predator:veritanium_scrap_from_plasma_bow"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_plasma_bow"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "avp_predator:veritanium_scrap_from_plasma_bow"
+    ]
+  }
+}

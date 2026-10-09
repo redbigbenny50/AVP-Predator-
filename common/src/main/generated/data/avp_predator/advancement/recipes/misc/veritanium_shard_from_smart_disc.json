@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_smart_disc": {
+      "conditions": {
+        "items": [
+          {
+            "items": "avp_predator:smart_disc"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "avp_predator:veritanium_shard_from_smart_disc"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_smart_disc"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "avp_predator:veritanium_shard_from_smart_disc"
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "avp_predator:plasma_core"
+    },
+    "V": {
+      "item": "avp_predator:veritanium_shard"
+    }
+  },
+  "pattern": [
+    "VVV",
+    "VCV",
+    "VVV"
+  ],
+  "result": {
+    "count": 8,
+    "id": "avp_predator:plasma_shuriken"
+  }
+}

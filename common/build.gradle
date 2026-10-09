@@ -1,8 +1,72 @@
+// Sep 27 - converted from 'blib-multiloader-common'. What the plugin added to the COMMON module only is written out
+// here: NeoForm for compiling against vanilla, BLib, the recipe-viewer APIs, and the commonJava / commonResources
+// artifacts the loader modules build from.
 plugins {
-    id 'blib-multiloader-common'
+    id 'multiloader-common'
+    id 'net.neoforged.moddev' version "${moddev_version}"
+}
+
+// applyAndConfigureNeoForm
+neoForge {
+    neoFormVersion = neo_form_version
+
+    def accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+    if (accessTransformer.exists()) {
+        accessTransformers.from(accessTransformer.absolutePath)
+    }
+
+    parchment {
+        minecraftVersion = parchment_minecraft
+        mappingsVersion = parchment_version
+    }
+}
+
+// configureCommonArtifacts
+configurations {
+    commonJava {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+    commonResources {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+}
+
+tasks.register('prepareGeneratedDir') {
+    doLast {
+        file('src/main/generated').mkdirs()
+    }
+}
+
+tasks.named('processResources') {
+    dependsOn 'prepareGeneratedDir'
+}
+
+sourceSets.main.resources.srcDir('src/main/generated')
+
+def packageCommonResources = tasks.register('packageCommonResources', Sync) {
+    from(sourceSets.main.resources)
+    into(layout.buildDirectory.dir('commonResourcesOut'))
+}
+
+artifacts {
+    commonJava sourceSets.main.java.sourceDirectories.singleFile
+    commonResources(packageCommonResources.get().outputs.files.singleFile) {
+        builtBy packageCommonResources
+    }
 }
 
 dependencies {
+    // configureBlibCommonDependency
+    compileOnly "com.blib:blib-common-${minecraft_version}:${blib_version}"
+
+    // configureRecipeViewers (common part)
+    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+    compileOnly "me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}"
+    compileOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}"
+
+    // Unchanged from before the conversion.
     compileOnly "com.just:just-codec:${project.just_codec_version}"
     compileOnly "com.just:just-core:${project.just_core_version}"
     compileOnly "com.just:just-goap:${project.just_goap_version}"

@@ -2,6 +2,7 @@ package com.predator.fabric.data.recipe;
 
 import com.blib.fabric.data.recipe.builder.RecipeBuilder;
 import com.predator.Predator;
+import com.predator.fabric.data.recipe.impl.CloakRecipeProvider;
 import com.predator.fabric.data.recipe.impl.MiscellaneousRecipeProvider;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
@@ -20,6 +21,7 @@ public class RecipeProvider extends FabricRecipeProvider {
     public void buildRecipes(RecipeOutput recipeOutput) {
         var builder = RecipeBuilder.with(Predator.MOD, recipeOutput, this::withConditions);
         MiscellaneousRecipeProvider.provide(builder);
+        CloakRecipeProvider.provide(builder);
     }
 
 }

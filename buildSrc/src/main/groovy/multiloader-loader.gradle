@@ -1,0 +1,35 @@
+// Sep 27 - replaces the blib-gradle plugin's 'blib-multiloader-loader' (BlibMultiloaderLoaderPlugin.java): a loader
+// module compiles common's SOURCES and packs common's RESOURCES into its own jar, and compiles against common with
+// the capability the common module publishes.
+plugins {
+    id 'multiloader-common'
+}
+
+configurations {
+    commonJava {
+        canBeResolved = true
+    }
+    commonResources {
+        canBeResolved = true
+    }
+}
+
+dependencies {
+    compileOnly(project(':common')) {
+        capabilities {
+            requireCapability "$group:$mod_id"
+        }
+    }
+    commonJava project(path: ':common', configuration: 'commonJava')
+    commonResources project(path: ':common', configuration: 'commonResources')
+}
+
+tasks.named('compileJava', JavaCompile) {
+    dependsOn(configurations.commonJava)
+    source(configurations.commonJava)
+}
+
+processResources {
+    dependsOn(configurations.commonResources)
+    from(configurations.commonResources)
+}

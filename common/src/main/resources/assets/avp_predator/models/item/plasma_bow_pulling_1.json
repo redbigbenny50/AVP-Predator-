@@ -1,0 +1,6 @@
+{
+  "parent": "avp_predator:item/plasma_bow",
+  "textures": {
+    "layer0": "avp_predator:item/plasma_bow_pulling_1"
+  }
+}

@@ -15,6 +15,9 @@ public class EnUsBlockProvider {
 
     public static final Consumer<FabricLanguageProvider.TranslationBuilder> CONSUMER = builder -> {
         addBlock(builder, PredatorBlocks.TRIP_MINE_BLOCK, "Trip Mine");
+        addBlock(builder, PredatorBlocks.GAUNTLET_BLOCK, "Wrist Gauntlet");
+        addBlock(builder, PredatorBlocks.SKINNED_CORPSE, "Skinned Corpse");
+        addBlock(builder, PredatorBlocks.YAUTJA_BLOOD, "Yautja Blood");
 
         var missingEntries = PredatorBlocks.REGISTRY.computeMissingEntries(TOUCHED_ENTRIES);
 

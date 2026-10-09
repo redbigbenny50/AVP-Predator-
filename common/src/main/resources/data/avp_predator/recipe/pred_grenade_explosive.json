@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "S": {
+      "item": "avp_predator:veritanium_shard"
+    },
+    "T": {
+      "item": "minecraft:tnt"
+    }
+  },
+  "pattern": [
+    "S S",
+    "STS",
+    "SSS"
+  ],
+  "result": {
+    "count": 4,
+    "id": "avp_predator:pred_grenade_explosive"
+  }
+}

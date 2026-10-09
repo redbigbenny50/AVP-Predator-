@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_chain_whip": {
+      "conditions": {
+        "items": [
+          {
+            "items": "avp_predator:chain_whip"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "avp_predator:veritanium_shard_from_chain_whip"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_chain_whip"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "avp_predator:veritanium_shard_from_chain_whip"
+    ]
+  }
+}

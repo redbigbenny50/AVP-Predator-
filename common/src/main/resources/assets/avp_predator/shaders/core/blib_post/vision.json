@@ -13,7 +13,8 @@
         { "name": "entityLightmap" },
         { "name": "entityDrawData" },
         { "name": "entitySpecular" },
-        { "name": "entityMaterialId" }
+        { "name": "entityMaterialId" },
+        { "name": "depthtex0" }
     ],
     "uniforms": [
         { "name": "sunAngle",                 "type": "float",     "count": 1,  "values": [0.0] },
@@ -28,6 +29,11 @@
         { "name": "gbufferModelViewInverse",  "type": "matrix4x4", "count": 16, "values": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0] },
         { "name": "wipeLineX",                "type": "float",     "count": 1,  "values": [1.0] },
         { "name": "oldMode",                  "type": "int",       "count": 1,  "values": [0] },
-        { "name": "newMode",                  "type": "int",       "count": 1,  "values": [0] }
+        { "name": "newMode",                  "type": "int",       "count": 1,  "values": [0] },
+        { "name": "heatSourceCount",           "type": "int",       "count": 1,  "values": [0] },
+        { "name": "heatSourceRange",           "type": "float",     "count": 1,  "values": [12.0] },
+        { "name": "heatDebugView",             "type": "int",       "count": 1,  "values": [0] },
+        { "name": "cameraSubmerged",           "type": "int",       "count": 1,  "values": [0] },
+        { "name": "rainLevel",                 "type": "float",     "count": 1,  "values": [0.0] }
     ]
 }

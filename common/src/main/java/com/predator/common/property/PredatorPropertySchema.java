@@ -7,7 +7,7 @@ public class PredatorPropertySchema {
     static final BLibPropertySchema SCHEMA = BLibPropertySchema.builder()
         .withPropertyValueAlignment(true)
         .addComment("Block radius that a trip mine looks for a living entity.")
-        .addProperty(PredatorProperties.Blocks.TripMine.RANGE, 2)
+        .addProperty(PredatorProperties.Blocks.TripMine.RANGE, 3)
         .build();
 
     private PredatorPropertySchema() {

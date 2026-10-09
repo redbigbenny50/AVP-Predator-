@@ -14,7 +14,15 @@ public class PredatorSpawnEggItems {
 
     public static final BLibRegistry<Item> REGISTRY = Predator.MOD.registries().create(BuiltInRegistries.ITEM);
 
-    public static final BLibHolder<SpawnEggItem> YAUTJA_SPAWN_EGG = create("yautja", PredatorEntityTypes.YAUTJA);
+    /**
+     * ⚠ The path here is the ENTITY name, not the item name — {@link #create} appends {@code _spawn_egg}. It must track
+     * the entity type id: the entity became {@code yautja_jungle} but this was left as {@code yautja}, so the item
+     * stayed {@code avp_predator:yautja_spawn_egg} while the migration rewrote saved stacks to
+     * {@code yautja_jungle_spawn_egg} — an id nothing registered. The model generator iterates this registry, so it
+     * kept emitting the old name and the egg rendered as a missing texture, creative tab icon included.
+     */
+    public static final BLibHolder<SpawnEggItem> YAUTJA_SPAWN_EGG =
+        create("yautja_jungle", PredatorEntityTypes.YAUTJA);
 
     private static <E extends Mob> BLibHolder<SpawnEggItem> create(String path, BLibHolder<EntityType<E>> holder) {
         return REGISTRY.createHolder(

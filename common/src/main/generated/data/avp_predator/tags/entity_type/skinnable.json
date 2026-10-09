@@ -1,0 +1,43 @@
+{
+  "values": [
+    "minecraft:villager",
+    "minecraft:wandering_trader",
+    "minecraft:pillager",
+    "minecraft:vindicator",
+    "minecraft:evoker",
+    "minecraft:illusioner",
+    "minecraft:witch",
+    {
+      "id": "avp_human:marine",
+      "required": false
+    },
+    {
+      "id": "avp_human:colonist",
+      "required": false
+    },
+    {
+      "id": "slimpatch:male_villager",
+      "required": false
+    },
+    {
+      "id": "slimpatch:female_villager",
+      "required": false
+    },
+    {
+      "id": "slimpatch:human_trader",
+      "required": false
+    },
+    {
+      "id": "slimpatch:pillager",
+      "required": false
+    },
+    {
+      "id": "slimpatch:vindicator",
+      "required": false
+    },
+    {
+      "id": "slimpatch:evoker",
+      "required": false
+    }
+  ]
+}

@@ -3,6 +3,10 @@
     "#minecraft:axes",
     "#minecraft:swords",
     "minecraft:bow",
-    "minecraft:crossbow"
+    "minecraft:crossbow",
+    {
+      "id": "#avp_human:guns",
+      "required": false
+    }
   ]
 }

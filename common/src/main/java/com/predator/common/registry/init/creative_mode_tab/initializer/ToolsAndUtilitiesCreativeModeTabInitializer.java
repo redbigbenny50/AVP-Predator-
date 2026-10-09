@@ -16,5 +16,6 @@ public class ToolsAndUtilitiesCreativeModeTabInitializer {
 
         CreativeModeTabUtil.accept(output, PredatorItems.PREDATOR_MUSIC_DISC_1);
         CreativeModeTabUtil.accept(output, PredatorItems.MUD_BUCKET);
+        CreativeModeTabUtil.accept(output, PredatorItems.CLOAKING_DEVICE);
     };
 }

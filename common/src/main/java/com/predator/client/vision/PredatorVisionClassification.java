@@ -1,7 +1,8 @@
 package com.predator.client.vision;
 
+import com.predator.common.gameplay.cloak.PredatorCloak;
 import com.predator.common.gameplay.component.PredatorVisionMode;
-import com.predator.common.registry.init.PredatorMobEffects;
+import com.predator.common.gameplay.effect.PredatorMud;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,6 +133,23 @@ public final class PredatorVisionClassification {
             return Result.NONE;
         }
 
+        // The cloak's vision trade, and it cuts both ways. An engaged field defeats thermal outright — it is a heat
+        // barrier before it is anything else — but the field itself radiates, so it lights up under EM even though an
+        // uncloaked predator does not register there at all. That leak is the in-world reason xenomorphs are not fooled
+        // by it, and it is what makes two hunters in one world a real contest instead of a stalemate.
+        //
+        // Checked BEFORE the visible-tag gate on purpose: a cloaked wearer must read as EM-visible whether or not their
+        // entity type carries the em_visible tag.
+        if (PredatorCloak.isConcealed(entity)) {
+            if (mode == PredatorVisionMode.ELECTROMAGNETIC) {
+                return Result.VISIBLE;
+            }
+
+            if (mode == PredatorVisionMode.THERMAL) {
+                return Result.BACKGROUND;
+            }
+        }
+
         if (!isVisibleUnder(mode, entity)) {
             return Result.BACKGROUND;
         }
@@ -139,7 +157,7 @@ public final class PredatorVisionClassification {
         // Mud cloak: a thermal-only effect that insulates the entity's heat signature, so a thermal-tagged
         // mob covered in mud reads as cold world (background) instead of as foreground. Other vision modes
         // are unaffected — an em-tagged mob covered in mud still shows up under EM.
-        if (mode == PredatorVisionMode.THERMAL && entity.hasEffect(PredatorMobEffects.getMudHolder())) {
+        if (mode == PredatorVisionMode.THERMAL && PredatorMud.isMuddy(entity)) {
             return Result.BACKGROUND;
         }
 

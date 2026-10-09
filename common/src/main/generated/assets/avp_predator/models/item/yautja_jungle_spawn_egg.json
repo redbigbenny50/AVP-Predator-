@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "avp_predator:item/yautja_jungle_spawn_egg"
+  }
+}

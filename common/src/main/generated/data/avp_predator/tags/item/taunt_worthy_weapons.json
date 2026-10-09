@@ -1,0 +1,21 @@
+{
+  "values": [
+    {
+      "id": "avp_human:m42a3_sniper_rifle",
+      "required": false
+    },
+    {
+      "id": "avp_human:old_painless",
+      "required": false
+    },
+    {
+      "id": "avp_human:m56_smartgun",
+      "required": false
+    },
+    "avp_predator:battleaxe",
+    "avp_predator:combi_stick",
+    "avp_predator:plasma_bow",
+    "avp_predator:plasma_sword",
+    "avp_predator:hand_caster"
+  ]
+}

@@ -1,0 +1,152 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.plasma_bolt",
+				"texture_width": 64,
+				"texture_height": 16,
+				"visible_bounds_width": 3,
+				"visible_bounds_height": 2.5,
+				"visible_bounds_offset": [
+					0,
+					0.75,
+					0
+				]
+			},
+			"bones": [
+				{
+					"name": "root",
+					"pivot": [
+						0,
+						8,
+						-0.11667
+					]
+				},
+				{
+					"name": "gBolt",
+					"parent": "root",
+					"pivot": [
+						0,
+						8,
+						-0.11667
+					],
+					"rotation": [
+						180,
+						0,
+						-135
+					],
+					"cubes": [
+						{
+							"origin": [
+								0,
+								3,
+								-15.95
+							],
+							"size": [
+								0,
+								10,
+								32
+							],
+							"pivot": [
+								0,
+								8,
+								0.05
+							],
+							"rotation": [
+								0,
+								0,
+								90
+							],
+							"uv": [
+								0,
+								-32
+							]
+						},
+						{
+							"origin": [
+								0,
+								3,
+								-15.95
+							],
+							"size": [
+								0,
+								10,
+								32
+							],
+							"pivot": [
+								0,
+								8,
+								0.05
+							],
+							"rotation": [
+								0,
+								0,
+								-180
+							],
+							"uv": [
+								0,
+								-32
+							]
+						}
+					]
+				},
+				{
+					"name": "gTip",
+					"parent": "gBolt",
+					"pivot": [
+						0,
+						8,
+						-0.45
+					],
+					"cubes": [
+						{
+							"origin": [
+								-1,
+								7,
+								11.55
+							],
+							"size": [
+								2,
+								2,
+								4
+							],
+							"inflate": -0.6,
+							"uv": [
+								12,
+								10
+							]
+						},
+						{
+							"origin": [
+								-1,
+								7,
+								11.65
+							],
+							"size": [
+								2,
+								2,
+								4
+							],
+							"inflate": -0.6,
+							"pivot": [
+								0,
+								8,
+								-0.35
+							],
+							"rotation": [
+								0,
+								0,
+								45
+							],
+							"uv": [
+								12,
+								10
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

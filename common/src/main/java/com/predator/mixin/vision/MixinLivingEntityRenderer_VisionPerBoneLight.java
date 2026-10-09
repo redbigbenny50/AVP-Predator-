@@ -3,6 +3,7 @@ package com.predator.mixin.vision;
 import com.blib.api.client.posteffect.v1.BLibPerBoneLightContext;
 import com.blib.api.client.posteffect.v1.BLibPostEffectFramework;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.predator.client.vision.PredatorHeatMaterials;
 import com.predator.client.vision.PredatorVisionClassification;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -41,8 +42,8 @@ import java.util.Deque;
 public abstract class MixinLivingEntityRenderer_VisionPerBoneLight {
 
     /**
-     * Per-render frame: {@code [pushedLaneA, pushedLaneB, pushedPerBoneLight]} as 0/1 ints. A stack so re-entrant
-     * renders (passenger drawn inside its mount's render, etc.) compose correctly. Render-thread only.
+     * Per-render frame: {@code [pushedLaneA, pushedLaneB, pushedPerBoneLight, pushedMaterialId]} as 0/1 ints. A stack
+     * so re-entrant renders (passenger drawn inside its mount's render, etc.) compose correctly. Render-thread only.
      */
     private static final ThreadLocal<Deque<int[]>> FRAME_STACK = ThreadLocal.withInitial(ArrayDeque::new);
 
@@ -57,10 +58,16 @@ public abstract class MixinLivingEntityRenderer_VisionPerBoneLight {
         CallbackInfo ci
     ) {
         // Always push a frame even if we're going to bail — RETURN pops unconditionally so push/pop must be paired.
-        var frame = new int[3];
+        var frame = new int[4];
         FRAME_STACK.get().push(frame);
 
-        if (BLibPostEffectFramework.isShaderModActive()) {
+        // ⚠ A SHADER PACK NO LONGER MEANS "DO NOTHING". BLib's classification pass is the one point under a pack
+        // where this per-entity work IS wanted — it draws into BLib's own private framebuffer, which the vision then
+        // samples. Bail for the pack's own passes; take part in ours.
+        if (
+            BLibPostEffectFramework.isShaderModActive()
+                && !BLibPostEffectFramework.isClassificationPassActive()
+        ) {
             return;
         }
 
@@ -87,6 +94,20 @@ public abstract class MixinLivingEntityRenderer_VisionPerBoneLight {
                 BLibPostEffectFramework.pushBackgroundEntityB();
                 frame[1] = 1;
             }
+        }
+
+        // Warm-blooded tagging is independent of visibility: an animal reads warm in thermal whether or not the mode
+        // treats it as a foreground entity. Flushing the batch is what makes it per-entity rather than per-batch —
+        // without it every creature in a batch samples whichever ID was current when the flush happened.
+        var materialId = PredatorHeatMaterials.materialIdFor(entity);
+
+        if (materialId != 0) {
+            if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
+                bufferSource.endBatch();
+            }
+
+            BLibPostEffectFramework.pushMaterialId(materialId);
+            frame[3] = 1;
         }
 
         if (!classification.anyVisible()) {
@@ -128,6 +149,15 @@ public abstract class MixinLivingEntityRenderer_VisionPerBoneLight {
         var poppedLaneA = frame[0] == 1;
         var poppedLaneB = frame[1] == 1;
         var poppedPerBoneLight = frame[2] == 1;
+        var poppedMaterialId = frame[3] == 1;
+
+        if (poppedMaterialId) {
+            if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
+                bufferSource.endBatch();
+            }
+
+            BLibPostEffectFramework.popMaterialId();
+        }
 
         if (poppedPerBoneLight) {
             BLibPerBoneLightContext.pop();

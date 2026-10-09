@@ -1,0 +1,14 @@
+plugins {
+    id 'groovy-gradle-plugin'
+}
+
+repositories {
+    gradlePluginPortal()
+    mavenCentral()
+}
+
+dependencies {
+    // Spotless is applied from the precompiled multiloader-common script, so it has to be on buildSrc's classpath.
+    // Same version the blib-gradle plugin bundled.
+    implementation 'com.diffplug.spotless:spotless-plugin-gradle:8.1.0'
+}

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "avp_predator:veritanium_pickaxe"
+    }
+  ],
+  "result": {
+    "count": 13,
+    "id": "avp_predator:veritanium_shard"
+  }
+}

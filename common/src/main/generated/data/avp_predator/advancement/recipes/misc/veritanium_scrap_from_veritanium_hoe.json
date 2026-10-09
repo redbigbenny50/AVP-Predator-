@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "avp_predator:veritanium_scrap_from_veritanium_hoe"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_veritanium_hoe": {
+      "conditions": {
+        "items": [
+          {
+            "items": "avp_predator:veritanium_hoe"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_veritanium_hoe"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "avp_predator:veritanium_scrap_from_veritanium_hoe"
+    ]
+  }
+}

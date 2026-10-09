@@ -1,6 +1,6 @@
-plugins {
-    id 'blib-multiloader-root'
-}
+// Sep 27 - converted from the blib-gradle plugin. The blib { } block that used to live here is now plain properties in
+// gradle.properties, and the build logic it drove lives in buildSrc (multiloader-common / multiloader-loader) and in
+// each module's build.gradle. Everything else in this file is unchanged.
 
 allprojects {
     repositories {
@@ -21,56 +21,6 @@ allprojects {
     }
 }
 
-blib {
-    version = project.blib_version
-    recipeViewer = 'rei'
-
-    mod {
-        author = 'Stargazer Studios'
-        credits = 'Stargazer Studios'
-        description = 'A module for the AVP universe that adds predator content.'
-        group = 'com.avp.predator'
-        icon = 'assets/avp_predator/icon.png'
-        id = 'avp_predator'
-        license = 'All Rights Reserved'
-        name = 'AVP (Predator)'
-        version = '0.1.3'
-
-        publish {
-            dryRun = true
-
-            discordWebhook {
-                username = "MU/TH/UR"
-                avatarUrl = "https://i.imgur.com/5Y0EZ9x.jpeg"
-                thumbnailUrl = "https://cdn.modrinth.com/data/Uqo0H9FX/8ffabe2f364c34e6b0f13019664c5fe4989c2f95_96.webp"
-            }
-
-            curseforge {
-                projectId = '1406353'
-                projectSlug = 'avp-predator'
-            }
-
-            modrinth {
-                projectId = '3qzSv6RG'
-            }
-        }
-    }
-
-    maven {
-        repository 'https://maven.bvanseghi.dev/avp_alien'
-        repository 'https://maven.bvanseghi.dev/avp_human'
-        repository 'https://maven.bvanseghi.dev/blib_engine'
-
-        publish {
-            url = 'https://maven.bvanseghi.dev/avp_predator/'
-
-            credentials {
-                usernameEnv = 'AVP_MAVEN_USERNAME'
-                passwordEnv = 'AVP_MAVEN_PASSWORD'
-            }
-        }
-    }
-}
 subprojects {
     plugins.withId('maven-publish') {
         publishing {

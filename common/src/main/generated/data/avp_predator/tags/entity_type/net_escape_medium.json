@@ -1,0 +1,31 @@
+{
+  "values": [
+    "minecraft:zombie",
+    "minecraft:skeleton",
+    "minecraft:husk",
+    "minecraft:stray",
+    "minecraft:drowned",
+    "minecraft:wither_skeleton",
+    "minecraft:pillager",
+    "minecraft:vindicator",
+    "minecraft:witch",
+    "minecraft:zombie_villager",
+    "minecraft:creeper",
+    "minecraft:enderman",
+    "minecraft:piglin",
+    "minecraft:zombified_piglin",
+    "minecraft:piglin_brute",
+    {
+      "id": "slimpatch:pillager",
+      "required": false
+    },
+    {
+      "id": "slimpatch:vindicator",
+      "required": false
+    },
+    {
+      "id": "slimpatch:human_zombie_villager",
+      "required": false
+    }
+  ]
+}

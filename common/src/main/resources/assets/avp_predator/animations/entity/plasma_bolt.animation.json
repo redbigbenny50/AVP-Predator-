@@ -1,0 +1,28 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"bolt.fire": {
+			"loop": true,
+			"bones": {
+				"root": {
+					"scale": {
+						"vector": [
+							0.363,
+							0.363,
+							0.363
+						]
+					}
+				},
+				"gBolt": {
+					"position": {
+						"vector": [
+							0,
+							-27,
+							0
+						]
+					}
+				}
+			}
+		}
+	}
+}

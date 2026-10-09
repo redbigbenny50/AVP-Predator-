@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "V": {
+      "item": "avp_predator:veritanium_shard"
+    }
+  },
+  "pattern": [
+    "V",
+    "V",
+    "I"
+  ],
+  "result": {
+    "count": 8,
+    "id": "avp_predator:veritanium_dart"
+  }
+}

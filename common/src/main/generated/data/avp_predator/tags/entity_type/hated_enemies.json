@@ -1,0 +1,40 @@
+{
+  "values": [
+    {
+      "id": "ad_astra:star_crawler",
+      "required": false
+    },
+    {
+      "id": "ad_astra:zombified_mogler",
+      "required": false
+    },
+    {
+      "id": "ad_astra:zombified_pygro",
+      "required": false
+    },
+    {
+      "id": "ad_astra:sulfur_creeper",
+      "required": false
+    },
+    {
+      "id": "ad_astra:corrupted_lunarian",
+      "required": false
+    },
+    {
+      "id": "ad_astra:pygro",
+      "required": false
+    },
+    {
+      "id": "ad_astra:pygro_brute",
+      "required": false
+    },
+    {
+      "id": "ad_astra:martian_raptor",
+      "required": false
+    },
+    {
+      "id": "ad_astra:mogler",
+      "required": false
+    }
+  ]
+}

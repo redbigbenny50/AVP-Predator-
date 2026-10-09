@@ -1,0 +1,5 @@
+Now safe to delete (the jar comparison passed):
+
+    blib-gradle\        (the whole folder - the old plugin source, no longer used)
+
+Also delete DELETE_AFTER_VERIFYING.txt from the repo root if it is still there.

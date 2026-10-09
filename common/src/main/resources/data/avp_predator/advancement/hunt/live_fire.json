@@ -1,0 +1,26 @@
+{
+  "parent": "avp_predator:hunt/root",
+  "criteria": {
+    "code": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "icon": {
+      "count": 1,
+      "id": "minecraft:crossbow"
+    },
+    "title": {
+      "translate": "advancements.avp_predator.hunt.live_fire.title"
+    },
+    "description": {
+      "translate": "advancements.avp_predator.hunt.live_fire.description"
+    }
+  },
+  "requirements": [
+    [
+      "code"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

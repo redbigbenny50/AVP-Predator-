@@ -1,0 +1,43 @@
+{
+  "parent": "avp_predator:hunt/blooded",
+  "criteria": {
+    "set": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "avp_predator:jungle_predator_helmet"
+          },
+          {
+            "items": "avp_predator:jungle_predator_chestplate"
+          },
+          {
+            "items": "avp_predator:jungle_predator_leggings"
+          },
+          {
+            "items": "avp_predator:jungle_predator_boots"
+          }
+        ]
+      }
+    }
+  },
+  "display": {
+    "icon": {
+      "count": 1,
+      "id": "avp_predator:jungle_predator_chestplate"
+    },
+    "title": {
+      "translate": "advancements.avp_predator.hunt.veritanium_set.title"
+    },
+    "description": {
+      "translate": "advancements.avp_predator.hunt.veritanium_set.description"
+    },
+    "frame": "goal"
+  },
+  "requirements": [
+    [
+      "set"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

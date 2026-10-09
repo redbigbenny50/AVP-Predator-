@@ -1,9 +1,101 @@
 //file:noinspection GroovyAssignabilityCheck
+// Sep 27 - converted from 'blib-multiloader-neoforge' (BlibMultiloaderNeoForgePlugin + BlibNeoForgeConfigurator).
+// Everything the plugin did for NeoForge is written out below, in the plugin's order.
 plugins {
-    id 'blib-multiloader-neoforge'
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev' version "${moddev_version}"
+    id 'me.modmuss50.mod-publish-plugin' version "${mod_publish_version}"
+}
+
+// configureLocalRuntime + configureBlibConfigurations - kept under the same names, so the dependency block below is
+// unchanged. Each blib* configuration excludes this mod's own group, exactly as the plugin did.
+configurations {
+    localRuntime {
+        canBeConsumed = false
+        visible = false
+    }
+    named(sourceSets.main.runtimeClasspathConfigurationName) {
+        extendsFrom(configurations.localRuntime)
+    }
+
+    blibCompileOnly {
+        exclude group: project.group.toString()
+    }
+    blibRuntimeOnly {
+        exclude group: project.group.toString()
+    }
+    blibMod {
+        exclude group: project.group.toString()
+    }
+    compileOnly.extendsFrom(blibCompileOnly, blibMod)
+    localRuntime.extendsFrom(blibRuntimeOnly, blibMod)
+}
+
+// configureNeoForge
+neoForge {
+    version = neoforge_version
+
+    def accessTransformer = project(':common').file('src/main/resources/META-INF/accesstransformer.cfg')
+    if (accessTransformer.exists()) {
+        accessTransformers.from(accessTransformer.absolutePath)
+    }
+
+    parchment {
+        minecraftVersion = parchment_minecraft
+        mappingsVersion = parchment_version
+    }
+
+    runs {
+        configureEach {
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+            ideName = "NeoForge ${name.capitalize()} (${project.path})"
+            jvmArgument '-Dterminal.ansi=true'
+        }
+
+        client {
+            client()
+            gameDirectory = project.file('runs/client')
+        }
+
+        data {
+            data()
+            programArguments.addAll(
+                '--mod', mod_id,
+                '--all',
+                '--output', project.file('../common/src/main/generated/').absolutePath,
+                '--existing', project.file('../common/src/main/resources/').absolutePath
+            )
+        }
+
+        server {
+            server()
+            programArgument '--nogui'
+            gameDirectory = project.file('runs/server')
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
 }
 
 dependencies {
+    implementation "com.blib:blib-neoforge-${minecraft_version}:${blib_version}"
+
+    // configureLoader (recipe viewers): compile against all three, run with the one chosen in gradle.properties.
+    compileOnly "dev.emi:emi-neoforge:${emi_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+    compileOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}"
+    switch (recipe_viewer.toLowerCase()) {
+        case 'emi': localRuntime "dev.emi:emi-neoforge:${emi_version}"; break
+        case 'jei': localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"; break
+        case 'rei': localRuntime "me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}"; break
+        default: break
+    }
+
+    // Unchanged from before the conversion.
     implementation "com.just:just-codec:${project.just_codec_version}"
     implementation "com.just:just-core:${project.just_core_version}"
     implementation "com.just:just-goap:${project.just_goap_version}"
@@ -17,5 +109,85 @@ dependencies {
     }
     blibCompileOnly("com.avp.human:avp_human-neoforge-1.21.1:${project.avp_human_version}") {
         exclude group: 'com.blib'
+    }
+}
+
+// CurseForge / Modrinth / Discord publishing (BlibModPublishConfigurator). Only configured when key.properties
+// exists in the repo root, exactly as before - without it, publishMods is inert.
+def keyPropsFile = rootProject.file('key.properties')
+if (keyPropsFile.exists()) {
+    def releaseProp = new Properties()
+    keyPropsFile.withInputStream { releaseProp.load(it) }
+
+    publishMods {
+        changelog = rootProject.file('CHANGELOG.md').text
+        type = STABLE
+        file = tasks.named('jar').flatMap { it.archiveFile }
+        modLoaders.add('neoforge')
+        dryRun = publish_dry_run.toBoolean()
+
+        def discordPublishWebhookUrl = dryRun.get()
+            ? releaseProp.getProperty('discordDryRunPublishWebhookUrl')
+            : releaseProp.getProperty('discordPublishWebhookUrl')
+
+        discord {
+            webhookUrl = discordPublishWebhookUrl
+            dryRunWebhookUrl = discordPublishWebhookUrl
+            username = discord_username
+            avatarUrl = discord_avatar_url
+
+            content = changelog.map { text ->
+                def maxEmbedCharacterCount = 4096
+                def header = "# A new version of ${project.mod_name} for NeoForge has been released!\n"
+                def footer = "\n...and more! Check the mod page for more details."
+                def needsTruncation = (header.length() + text.length()) > maxEmbedCharacterCount
+                def maxContentLength = maxEmbedCharacterCount - header.length() - (needsTruncation ? footer.length() : 0)
+                def truncatedText = text
+
+                if (needsTruncation && text.length() > maxContentLength) {
+                    def candidate = text.take(maxContentLength)
+                    def lastNewline = candidate.lastIndexOf('\n')
+                    if (lastNewline != -1) {
+                        candidate = candidate.take(lastNewline)
+                    }
+                    truncatedText = candidate
+                }
+
+                header + truncatedText + (needsTruncation ? footer : '')
+            }
+
+            setPlatforms(publishMods.platforms.curseforge, publishMods.platforms.modrinth)
+
+            style {
+                look = 'MODERN'
+                thumbnailUrl = discord_thumbnail_url
+            }
+        }
+
+        curseforge {
+            projectId = curseforge_project_id
+            projectSlug = curseforge_project_slug
+            accessToken = releaseProp.getProperty('curseKey')
+            minecraftVersions.add(project.minecraft_version)
+            announcementTitle = 'Download from CurseForge'
+            javaVersions.add(JavaVersion.VERSION_21)
+            clientRequired = true
+            serverRequired = true
+
+            ['blib'].each { requiredSlug ->
+                requires { it.slug = requiredSlug }
+            }
+        }
+
+        modrinth {
+            projectId = modrinth_project_id
+            accessToken = releaseProp.getProperty('modrinthKey')
+            minecraftVersions.add(project.minecraft_version)
+            announcementTitle = 'Download from Modrinth'
+
+            ['blib'].each { requiredSlug ->
+                requires { it.slug = requiredSlug }
+            }
+        }
     }
 }

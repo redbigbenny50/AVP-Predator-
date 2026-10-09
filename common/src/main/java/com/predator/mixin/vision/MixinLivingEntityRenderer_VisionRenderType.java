@@ -33,7 +33,14 @@ public abstract class MixinLivingEntityRenderer_VisionRenderType {
         boolean glowing,
         CallbackInfoReturnable<RenderType> cir
     ) {
-        if (!PredatorVisionAccessor.isAnyVisionActive() || BLibPostEffectFramework.isShaderModActive()) {
+        // ⚠ A SHADER PACK NO LONGER MEANS "DO NOTHING". BLib's classification pass is the one point under a pack
+        // where this per-entity work IS wanted — it draws into BLib's own private framebuffer, which the vision then
+        // samples. Bail for the pack's own passes; take part in ours.
+        if (
+            !PredatorVisionAccessor.isAnyVisionActive()
+                || (BLibPostEffectFramework.isShaderModActive()
+                    && !BLibPostEffectFramework.isClassificationPassActive())
+        ) {
             return;
         }
 

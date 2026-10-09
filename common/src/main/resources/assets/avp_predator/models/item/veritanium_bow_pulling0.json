@@ -1,0 +1,6 @@
+{
+  "parent": "avp_predator:item/veritanium_bow",
+  "textures": {
+    "layer0": "avp_predator:item/veritanium_bow_pulling0"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "V": {
+      "item": "avp_predator:veritanium_shard"
+    }
+  },
+  "pattern": [
+    "V",
+    "V",
+    "V"
+  ],
+  "result": {
+    "count": 1,
+    "id": "avp_predator:chain_whip"
+  }
+}

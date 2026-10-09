@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:builtin/entity",
+  "textures": {
+    "particle": "avp_predator:block/skinned_corpse"
+  }
+}

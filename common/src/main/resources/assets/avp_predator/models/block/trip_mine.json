@@ -1,6 +1,9 @@
 {
   "credit": "Made with Blockbench",
   "parent": "builtin/entity",
+  "textures": {
+    "particle": "avp_predator:block/trip_mine"
+  },
   "display": {
     "thirdperson_righthand": {
       "translation": [

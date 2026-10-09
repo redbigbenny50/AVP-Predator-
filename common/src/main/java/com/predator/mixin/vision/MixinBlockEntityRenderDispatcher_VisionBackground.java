@@ -40,7 +40,13 @@ public abstract class MixinBlockEntityRenderDispatcher_VisionBackground {
         var frame = new int[2];
         FRAME_STACK.get().push(frame);
 
-        if (BLibPostEffectFramework.isShaderModActive()) {
+        // ⚠ A SHADER PACK NO LONGER MEANS "DO NOTHING". BLib's classification pass is the one point under a pack
+        // where this per-entity work IS wanted — it draws into BLib's own private framebuffer, which the vision then
+        // samples. Bail for the pack's own passes; take part in ours.
+        if (
+            BLibPostEffectFramework.isShaderModActive()
+                && !BLibPostEffectFramework.isClassificationPassActive()
+        ) {
             return;
         }
 

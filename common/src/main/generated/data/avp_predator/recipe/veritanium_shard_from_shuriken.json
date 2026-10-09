@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "avp_predator:shuriken"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "avp_predator:veritanium_shard"
+  }
+}

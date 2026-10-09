@@ -1,0 +1,14 @@
+{
+  "values": [
+    "minecraft:starve",
+    "minecraft:magic",
+    "minecraft:wither",
+    "minecraft:drown",
+    "minecraft:in_wall",
+    "minecraft:cramming",
+    "minecraft:dry_out",
+    "minecraft:outside_border",
+    "minecraft:generic_kill",
+    "minecraft:out_of_world"
+  ]
+}

@@ -12,6 +12,7 @@ import com.predator.fabric.data.model.BlockModelProvider;
 import com.predator.fabric.data.model.ItemModelProvider;
 import com.predator.fabric.data.recipe.RecipeProvider;
 import com.predator.fabric.data.tag.PredatorBlockTagProvider;
+import com.predator.fabric.data.tag.PredatorDamageTypeTagProvider;
 import com.predator.fabric.data.tag.PredatorEntityTypeTagProvider;
 import com.predator.fabric.data.tag.PredatorItemTagProvider;
 import com.predator.fabric.data.tag.PredatorMobEffectTagProvider;
@@ -36,6 +37,7 @@ public class PredatorDataGenerator implements DataGeneratorEntrypoint {
 
         // Tag providers
         pack.addProvider(PredatorBlockTagProvider::new);
+        pack.addProvider(PredatorDamageTypeTagProvider::new);
         pack.addProvider(PredatorEntityTypeTagProvider::new);
         pack.addProvider(PredatorItemTagProvider::new);
         pack.addProvider(PredatorMobEffectTagProvider::new);

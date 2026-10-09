@@ -1,4 +1,118 @@
 {
+  "caster.caster_charge": {
+    "sounds": [
+      "avp_predator:caster/charge_up"
+    ],
+    "subtitle": "subtitles.caster.caster_charge"
+  },
+  "caster.caster_deploy": {
+    "sounds": [
+      "avp_predator:caster/deploy"
+    ],
+    "subtitle": "subtitles.caster.caster_deploy"
+  },
+  "caster.caster_fire": {
+    "sounds": [
+      "avp_predator:caster/fire"
+    ],
+    "subtitle": "subtitles.caster.caster_fire"
+  },
+  "cloak.cloak_off": {
+    "sounds": [
+      "avp_predator:cloak/cloak_off"
+    ],
+    "subtitle": "subtitles.cloak.cloak_off"
+  },
+  "cloak.cloak_on": {
+    "sounds": [
+      "avp_predator:cloak/cloak_on"
+    ],
+    "subtitle": "subtitles.cloak.cloak_on"
+  },
+  "cloak.cloak_wet_loop": {
+    "sounds": [
+      "avp_predator:cloak/cloak_wet_loop"
+    ],
+    "subtitle": "subtitles.cloak.cloak_wet_loop"
+  },
+  "gauntlet.close": {
+    "sounds": [
+      "avp_predator:gauntlet/close"
+    ],
+    "subtitle": "subtitles.gauntlet.close"
+  },
+  "gauntlet.dart": {
+    "sounds": [
+      "avp_predator:gauntlet/dart"
+    ],
+    "subtitle": "subtitles.gauntlet.dart"
+  },
+  "gauntlet.destruct_armed": {
+    "sounds": [
+      "avp_predator:gauntlet/destruct_armed"
+    ],
+    "subtitle": "subtitles.gauntlet.destruct_armed"
+  },
+  "gauntlet.destruct_armed_cancel": {
+    "sounds": [
+      "avp_predator:gauntlet/destruct_armed_cancel"
+    ],
+    "subtitle": "subtitles.gauntlet.destruct_armed_cancel"
+  },
+  "gauntlet.destruct_countdown": {
+    "sounds": [
+      "avp_predator:gauntlet/destruct_countdown"
+    ],
+    "subtitle": "subtitles.gauntlet.destruct_countdown"
+  },
+  "gauntlet.destruct_disarm_button": {
+    "sounds": [
+      "avp_predator:gauntlet/destruct_disarm_button"
+    ],
+    "subtitle": "subtitles.gauntlet.destruct_disarm_button"
+  },
+  "gauntlet.destruct_disarm_button_confirm": {
+    "sounds": [
+      "avp_predator:gauntlet/destruct_disarm_button_confirm"
+    ],
+    "subtitle": "subtitles.gauntlet.destruct_disarm_button_confirm"
+  },
+  "gauntlet.empty": {
+    "sounds": [
+      "avp_predator:gauntlet/empty"
+    ],
+    "subtitle": "subtitles.gauntlet.empty"
+  },
+  "gauntlet.net": {
+    "sounds": [
+      "avp_predator:gauntlet/net"
+    ],
+    "subtitle": "subtitles.gauntlet.net"
+  },
+  "gauntlet.open": {
+    "sounds": [
+      "avp_predator:gauntlet/open"
+    ],
+    "subtitle": "subtitles.gauntlet.open"
+  },
+  "gauntlet.pellet": {
+    "sounds": [
+      "avp_predator:gauntlet/pellet"
+    ],
+    "subtitle": "subtitles.gauntlet.pellet"
+  },
+  "grapple.chain_deploy": {
+    "sounds": [
+      "avp_predator:grapple/chain_deploy"
+    ],
+    "subtitle": "subtitles.grapple.chain_deploy"
+  },
+  "grapple.chain_retract": {
+    "sounds": [
+      "avp_predator:grapple/chain_retract"
+    ],
+    "subtitle": "subtitles.grapple.chain_retract"
+  },
   "item.armor.equip_veritanium": {
     "sounds": [
       {
@@ -13,5 +127,427 @@
       "avp_predator:jukebox_sounds/predator_music_1"
     ],
     "subtitle": "subtitles.jukebox_sounds.predator_music_1"
+  },
+  "plasma_bow.draw": {
+    "sounds": [
+      "avp_predator:plasma_bow/draw"
+    ],
+    "subtitle": "subtitles.plasma_bow.draw"
+  },
+  "plasma_bow.equip": {
+    "sounds": [
+      "avp_predator:plasma_bow/equip"
+    ],
+    "subtitle": "subtitles.plasma_bow.equip"
+  },
+  "plasma_bow.fire": {
+    "sounds": [
+      "avp_predator:plasma_bow/fire"
+    ],
+    "subtitle": "subtitles.plasma_bow.fire"
+  },
+  "plasma_bow.hit": {
+    "sounds": [
+      "avp_predator:plasma_bow/hit"
+    ],
+    "subtitle": "subtitles.plasma_bow.hit"
+  },
+  "plasma_bow.hold": {
+    "sounds": [
+      {
+        "name": "avp_predator:plasma_bow/hold",
+        "pitch": 0.92
+      },
+      {
+        "name": "avp_predator:plasma_bow/hold",
+        "pitch": 1.0
+      },
+      {
+        "name": "avp_predator:plasma_bow/hold",
+        "pitch": 1.09
+      }
+    ],
+    "subtitle": "subtitles.plasma_bow.hold"
+  },
+  "projectile.net_catch": {
+    "sounds": [
+      "avp_predator:projectile/net_catch"
+    ],
+    "subtitle": "subtitles.projectile.net_catch"
+  },
+  "projectile.pellet_hit": {
+    "sounds": [
+      "avp_predator:projectile/pellet_hit"
+    ],
+    "subtitle": "subtitles.projectile.pellet_hit"
+  },
+  "shuriken.charge": {
+    "sounds": [
+      "avp_predator:shuriken/charge"
+    ],
+    "subtitle": "subtitles.shuriken.charge"
+  },
+  "shuriken.charge_end": {
+    "sounds": [
+      "avp_predator:shuriken/charge_end"
+    ],
+    "subtitle": "subtitles.shuriken.charge_end"
+  },
+  "shuriken.equip": {
+    "sounds": [
+      "avp_predator:shuriken/equip"
+    ],
+    "subtitle": "subtitles.shuriken.equip"
+  },
+  "shuriken.throw": {
+    "sounds": [
+      "avp_predator:shuriken/throw"
+    ],
+    "subtitle": "subtitles.shuriken.throw"
+  },
+  "smart_disc.equip": {
+    "sounds": [
+      "avp_predator:smart_disc/equip"
+    ],
+    "subtitle": "subtitles.smart_disc.equip"
+  },
+  "smart_disc.hit_entity": {
+    "sounds": [
+      "avp_predator:smart_disc/hit_entity"
+    ],
+    "subtitle": "subtitles.smart_disc.hit_entity"
+  },
+  "smart_disc.hit_general": {
+    "sounds": [
+      "avp_predator:smart_disc/hit_general"
+    ],
+    "subtitle": "subtitles.smart_disc.hit_general"
+  },
+  "smart_disc.hit_metal": {
+    "sounds": [
+      "avp_predator:smart_disc/hit_metal"
+    ],
+    "subtitle": "subtitles.smart_disc.hit_metal"
+  },
+  "smart_disc.hit_stone": {
+    "sounds": [
+      "avp_predator:smart_disc/hit_stone"
+    ],
+    "subtitle": "subtitles.smart_disc.hit_stone"
+  },
+  "smart_disc.hit_wood": {
+    "sounds": [
+      "avp_predator:smart_disc/hit_wood"
+    ],
+    "subtitle": "subtitles.smart_disc.hit_wood"
+  },
+  "smart_disc.loop": {
+    "sounds": [
+      "avp_predator:smart_disc/loop"
+    ],
+    "subtitle": "subtitles.smart_disc.loop"
+  },
+  "smart_disc.return": {
+    "sounds": [
+      "avp_predator:smart_disc/return"
+    ],
+    "subtitle": "subtitles.smart_disc.return"
+  },
+  "smart_disc.throw": {
+    "sounds": [
+      "avp_predator:smart_disc/throw"
+    ],
+    "subtitle": "subtitles.smart_disc.throw"
+  },
+  "vision.vision_swap": {
+    "sounds": [
+      "avp_predator:vision/vision_swap"
+    ],
+    "subtitle": "subtitles.vision.vision_swap"
+  },
+  "whip.attack": {
+    "sounds": [
+      "avp_predator:whip/attack"
+    ],
+    "subtitle": "subtitles.whip.attack"
+  },
+  "whip.crack": {
+    "sounds": [
+      "avp_predator:whip/crack"
+    ],
+    "subtitle": "subtitles.whip.crack"
+  },
+  "whip.equip": {
+    "sounds": [
+      "avp_predator:whip/equip"
+    ],
+    "subtitle": "subtitles.whip.equip"
+  },
+  "yautja.roar": {
+    "subtitle": "subtitles.yautja.roar",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ravager.roar",
+        "type": "event"
+      }
+    ]
+  },
+  "hand_caster.charge": {
+    "sounds": [
+      {
+        "name": "avp_predator:caster.caster_charge",
+        "type": "event"
+      }
+    ],
+    "subtitle": "subtitles.hand_caster.charge"
+  },
+  "hand_caster.fire": {
+    "sounds": [
+      {
+        "name": "avp_predator:caster.caster_fire",
+        "type": "event"
+      }
+    ],
+    "subtitle": "subtitles.hand_caster.fire"
+  },
+  "hand_caster.reload": {
+    "sounds": [
+      {
+        "name": "minecraft:item.crossbow.loading_end",
+        "type": "event"
+      }
+    ],
+    "subtitle": "subtitles.hand_caster.reload"
+  },
+  "corpse.open": {
+    "sounds": [
+      "avp_predator:corpse/open"
+    ],
+    "subtitle": "subtitles.corpse.open"
+  },
+  "corpse.hit": {
+    "sounds": [
+      "avp_predator:corpse/hit"
+    ],
+    "subtitle": "subtitles.corpse.hit"
+  },
+  "corpse.break": {
+    "sounds": [
+      "avp_predator:corpse/break"
+    ],
+    "subtitle": "subtitles.corpse.break"
+  },
+  "yautja.smoke_bomb": {
+    "sounds": [
+      "avp_predator:yautja/smoke_bomb"
+    ],
+    "subtitle": "subtitles.yautja.smoke_bomb"
+  },
+  "explosive.timer_beep": {
+    "sounds": [
+      {
+        "name": "avp_predator:explosive/timer_beep",
+        "volume": 0.6
+      }
+    ],
+    "subtitle": "subtitles.explosive.timer_beep"
+  },
+  "yautja.click": {
+    "sounds": [
+      "avp_predator:yautja/click1",
+      "avp_predator:yautja/click2",
+      "avp_predator:yautja/click3"
+    ],
+    "subtitle": "subtitles.yautja.click"
+  },
+  "yautja.idle": {
+    "sounds": [
+      "avp_predator:yautja/idle1",
+      "avp_predator:yautja/idle2",
+      "avp_predator:yautja/idle3"
+    ],
+    "subtitle": "subtitles.yautja.idle"
+  },
+  "yautja.climb": {
+    "sounds": [
+      "avp_predator:yautja/climb1",
+      "avp_predator:yautja/climb2"
+    ],
+    "subtitle": "subtitles.yautja.climb"
+  },
+  "yautja.long_jump": {
+    "sounds": [
+      "avp_predator:yautja/long_jump1",
+      "avp_predator:yautja/long_jump2"
+    ],
+    "subtitle": "subtitles.yautja.long_jump"
+  },
+  "yautja.charge": {
+    "sounds": [
+      "avp_predator:yautja/charge"
+    ],
+    "subtitle": "subtitles.yautja.charge"
+  },
+  "yautja.taunt": {
+    "sounds": [
+      "avp_predator:yautja/taunt1",
+      "avp_predator:yautja/taunt2",
+      "avp_predator:yautja/taunt3",
+      "avp_predator:yautja/taunt4"
+    ],
+    "subtitle": "subtitles.yautja.taunt"
+  },
+  "gauntlet.destruct_laugh": {
+    "sounds": [
+      {
+        "name": "avp_predator:gauntlet/destruct_laugh",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.gauntlet.destruct_laugh"
+  },
+  "yautja.death": {
+    "sounds": [
+      {
+        "name": "avp_predator:yautja/death1",
+        "pitch": 0.85,
+        "volume": 0.7
+      },
+      {
+        "name": "avp_predator:yautja/death1",
+        "pitch": 1.0,
+        "volume": 0.7
+      },
+      {
+        "name": "avp_predator:yautja/death1",
+        "pitch": 1.15,
+        "volume": 0.7
+      },
+      {
+        "name": "avp_predator:yautja/death2",
+        "pitch": 0.85,
+        "volume": 0.7
+      },
+      {
+        "name": "avp_predator:yautja/death2",
+        "pitch": 1.0,
+        "volume": 0.7
+      },
+      {
+        "name": "avp_predator:yautja/death2",
+        "pitch": 1.15,
+        "volume": 0.7
+      },
+      {
+        "name": "avp_predator:yautja/death3",
+        "pitch": 0.85,
+        "volume": 0.7
+      },
+      {
+        "name": "avp_predator:yautja/death3",
+        "pitch": 1.0,
+        "volume": 0.7
+      },
+      {
+        "name": "avp_predator:yautja/death3",
+        "pitch": 1.15,
+        "volume": 0.7
+      },
+      {
+        "name": "avp_predator:yautja/death4",
+        "pitch": 0.85,
+        "volume": 0.7
+      },
+      {
+        "name": "avp_predator:yautja/death4",
+        "pitch": 1.0,
+        "volume": 0.7
+      },
+      {
+        "name": "avp_predator:yautja/death4",
+        "pitch": 1.15,
+        "volume": 0.7
+      }
+    ],
+    "subtitle": "subtitles.yautja.death"
+  },
+  "yautja.hurt": {
+    "sounds": [
+      {
+        "name": "avp_predator:yautja/hurt1",
+        "volume": 0.8
+      },
+      {
+        "name": "avp_predator:yautja/hurt2",
+        "volume": 0.8
+      },
+      {
+        "name": "avp_predator:yautja/hurt3",
+        "volume": 0.8
+      },
+      {
+        "name": "avp_predator:yautja/hurt4",
+        "volume": 0.8
+      },
+      {
+        "name": "avp_predator:yautja/hurt5",
+        "volume": 0.8
+      },
+      {
+        "name": "avp_predator:yautja/hurt6",
+        "volume": 0.8
+      },
+      {
+        "name": "avp_predator:yautja/hurt7",
+        "volume": 0.8
+      },
+      {
+        "name": "avp_predator:yautja/hurt8",
+        "volume": 0.8
+      },
+      {
+        "name": "avp_predator:yautja/hurt9",
+        "volume": 0.8
+      }
+    ],
+    "subtitle": "subtitles.yautja.hurt"
+  },
+  "yautja.attack": {
+    "sounds": [
+      {
+        "name": "avp_predator:yautja/attack1",
+        "volume": 0.9
+      },
+      {
+        "name": "avp_predator:yautja/attack2",
+        "volume": 0.9
+      },
+      {
+        "name": "avp_predator:yautja/attack3",
+        "volume": 0.9
+      }
+    ],
+    "subtitle": "subtitles.yautja.attack"
+  },
+  "yautja.heavy_attack": {
+    "sounds": [
+      "avp_predator:yautja/yell"
+    ],
+    "subtitle": "subtitles.yautja.heavy_attack"
+  },
+  "caster.caster_retract": {
+    "sounds": [
+      "avp_predator:caster/retract"
+    ],
+    "subtitle": "subtitles.caster.caster_retract"
+  },
+  "caster.charge_loop": {
+    "sounds": [
+      {
+        "name": "avp_predator:caster/charge_loop",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.caster.charge_loop"
   }
 }

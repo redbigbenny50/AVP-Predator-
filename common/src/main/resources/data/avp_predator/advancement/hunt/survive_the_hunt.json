@@ -1,0 +1,27 @@
+{
+  "parent": "avp_predator:hunt/root",
+  "criteria": {
+    "code": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "icon": {
+      "count": 1,
+      "id": "minecraft:totem_of_undying"
+    },
+    "title": {
+      "translate": "advancements.avp_predator.hunt.survive_the_hunt.title"
+    },
+    "description": {
+      "translate": "advancements.avp_predator.hunt.survive_the_hunt.description"
+    },
+    "frame": "goal"
+  },
+  "requirements": [
+    [
+      "code"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

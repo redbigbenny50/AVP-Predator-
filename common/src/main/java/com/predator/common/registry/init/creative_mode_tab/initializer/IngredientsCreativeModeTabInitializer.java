@@ -12,5 +12,7 @@ public class IngredientsCreativeModeTabInitializer {
         CreativeModeTabUtil.accept(output, PredatorItems.PREDATOR_MUSIC_DISC_1_FRAGMENT);
 
         CreativeModeTabUtil.accept(output, PredatorItems.VERITANIUM_SHARD);
+        CreativeModeTabUtil.accept(output, PredatorItems.VERITANIUM_SCRAP);
+        CreativeModeTabUtil.accept(output, PredatorItems.YAUTJA_BLOOD_BOTTLE);
     };
 }

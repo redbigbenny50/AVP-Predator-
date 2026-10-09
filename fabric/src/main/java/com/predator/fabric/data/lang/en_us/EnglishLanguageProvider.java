@@ -8,6 +8,7 @@ import com.predator.fabric.data.lang.en_us.provider.EnUsConfigProvider;
 import com.predator.fabric.data.lang.en_us.provider.EnUsCreativeModeTabProvider;
 import com.predator.fabric.data.lang.en_us.provider.EnUsEntityProvider;
 import com.predator.fabric.data.lang.en_us.provider.EnUsEntityTypeTagProvider;
+import com.predator.fabric.data.lang.en_us.provider.EnUsGauntletProvider;
 import com.predator.fabric.data.lang.en_us.provider.EnUsItemProvider;
 import com.predator.fabric.data.lang.en_us.provider.EnUsItemTagProvider;
 import com.predator.fabric.data.lang.en_us.provider.EnUsSoundEventProvider;
@@ -38,6 +39,9 @@ public class EnglishLanguageProvider extends FabricLanguageProvider {
         // Items
         EnUsItemProvider.CONSUMER.accept(builder);
 
+        // Gauntlet, its messages, and the keybinds
+        EnUsGauntletProvider.CONSUMER.accept(builder);
+
         // Sounds
         EnUsSoundEventProvider.CONSUMER.accept(builder);
 
@@ -46,6 +50,7 @@ public class EnglishLanguageProvider extends FabricLanguageProvider {
 
         // Mob Effects
         builder.add(PredatorMobEffects.getMudHolder().value(), "Mud");
+        builder.add(PredatorMobEffects.getFrozenSolidHolder().value(), "Frozen Solid");
 
         // Advancements
         EnUsAdvancementProvider.CONSUMER.accept(builder);

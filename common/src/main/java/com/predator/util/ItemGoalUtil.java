@@ -1,21 +1,18 @@
 package com.predator.util;
 
-import com.blib.api.common.entity.v1.BLibEntityPredicates;
 import com.predator.common.gameplay.entity.projectile.ShurikenProjectile;
 import com.predator.common.gameplay.entity.projectile.SmartDiscProjectile;
-import com.predator.common.registry.init.item.PredatorItems;
-import com.predator.common.registry.tag.PredatorEntityTypeTags;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.phys.Vec3;
 
 public class ItemGoalUtil {
 
     public static void shootShuriken(PathfinderMob entity) {
+        // The throw animation is a server-side event, so it crosses as synched data and the client plays it
+        // once. Dispatching an Az command from here would be a no-op — commands run client-side only.
+        // 🚨 NO ANIMATION HERE. YautjaThrowGoal plays the throw clip when the WIND-UP starts and calls this on the
+        // RELEASE frame; playing it here as well restarted the clip at the very moment the weapon left the hand.
+
         // TODO: Change sound effect here.
         entity.level()
             .playSound(
@@ -23,7 +20,7 @@ public class ItemGoalUtil {
                 entity.getX(),
                 entity.getY(),
                 entity.getZ(),
-                SoundEvents.TRIDENT_THROW,
+                com.predator.common.registry.init.PredatorSoundEvents.SHURIKEN_THROW.get(),
                 SoundSource.PLAYERS,
                 0.5F,
                 0.4F / (entity.level().getRandom().nextFloat() * 0.4F + 0.8F)
@@ -55,6 +52,11 @@ public class ItemGoalUtil {
     }
 
     public static void shootSmartDisc(PathfinderMob entity) {
+        // The throw animation is a server-side event, so it crosses as synched data and the client plays it
+        // once. Dispatching an Az command from here would be a no-op — commands run client-side only.
+        // 🚨 NO ANIMATION HERE. YautjaThrowGoal plays the throw clip when the WIND-UP starts and calls this on the
+        // RELEASE frame; playing it here as well restarted the clip at the very moment the weapon left the hand.
+
         // TODO: Change sound effect here.
         entity.level()
             .playSound(
@@ -62,7 +64,7 @@ public class ItemGoalUtil {
                 entity.getX(),
                 entity.getY(),
                 entity.getZ(),
-                SoundEvents.TRIDENT_THROW,
+                com.predator.common.registry.init.PredatorSoundEvents.SMART_DISC_THROW.get(),
                 SoundSource.PLAYERS,
                 0.5F,
                 0.4F / (entity.level().getRandom().nextFloat() * 0.4F + 0.8F)
@@ -92,52 +94,4 @@ public class ItemGoalUtil {
         }
     }
 
-    public static void trackToLivingEntity(Projectile projectile, Double bulletSpeed, Boolean highLightMob) {
-        var livingEntities = projectile.level()
-            .getEntitiesOfClass(
-                LivingEntity.class,
-                projectile.getBoundingBox().inflate(5),
-                livingEntity -> !livingEntity.getType()
-                    .is(
-                        PredatorEntityTypeTags.PREDATORS
-                    ) && !BLibEntityPredicates.isInvulnerable(livingEntity) && livingEntity != projectile.getOwner()
-            );
-        if (!livingEntities.isEmpty()) {
-            var first = livingEntities.getFirst();
-            if (Boolean.TRUE.equals(highLightMob))
-                first.setGlowingTag(true);
-            var entityPos = new Vec3(first.getX(), first.getY() + first.getEyeHeight(), first.getZ());
-            var directionToTarget = entityPos.subtract(projectile.position()).normalize();
-            var newVelocity = directionToTarget.scale(bulletSpeed);
-
-            projectile.setDeltaMovement(newVelocity);
-        }
-    }
-
-    public static void trackToOwnerEntity(Projectile projectile) {
-        if (projectile.getOwner() == null) {
-            return;
-        }
-
-        var vec3 = projectile.getOwner().getEyePosition().subtract(projectile.position());
-
-        projectile.setPosRaw(projectile.getX(), projectile.getY() + vec3.y * 0.015, projectile.getZ());
-
-        if (projectile.level().isClientSide) {
-            projectile.yOld = projectile.getY();
-        }
-
-        projectile.setDeltaMovement(projectile.getDeltaMovement().scale(0.95).add(vec3.normalize().scale(0.5)));
-
-        if (
-            projectile.getOwner() instanceof Player player && projectile.getBoundingBox().intersects(projectile.getOwner().getBoundingBox())
-        ) {
-            if (!BLibEntityPredicates.isInvulnerable(player)) {
-                player.getInventory().add(PredatorItems.SMART_DISC.get().getDefaultInstance());
-            }
-            projectile.kill();
-        } else if (projectile.getBoundingBox().intersects(projectile.getOwner().getBoundingBox())) {
-            projectile.kill();
-        }
-    }
 }

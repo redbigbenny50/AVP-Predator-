@@ -1,5 +1,5 @@
 {
-  "entityTypePredicate": "avp_predator:yautja",
+  "entityTypePredicate": "avp_predator:yautja_jungle",
   "geneBonusDataEntries": [
     {
       "id": "avp_human:attack_damage",

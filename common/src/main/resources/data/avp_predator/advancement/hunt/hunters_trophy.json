@@ -1,0 +1,27 @@
+{
+  "parent": "avp_predator:hunt/survive_the_hunt",
+  "criteria": {
+    "code": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "icon": {
+      "count": 1,
+      "id": "avp_predator:jungle_predator_helmet"
+    },
+    "title": {
+      "translate": "advancements.avp_predator.hunt.hunters_trophy.title"
+    },
+    "description": {
+      "translate": "advancements.avp_predator.hunt.hunters_trophy.description"
+    },
+    "frame": "challenge"
+  },
+  "requirements": [
+    [
+      "code"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

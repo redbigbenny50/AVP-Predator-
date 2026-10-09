@@ -1,9 +1,51 @@
 //file:noinspection GroovyAssignabilityCheck
+// Sep 27 - converted from 'blib-multiloader-fabric' (BlibMultiloaderFabricPlugin + BlibFabricConfigurator). Everything
+// the plugin did for Fabric is written out below, in the plugin's order.
 plugins {
-    id 'blib-multiloader-fabric'
+    id 'multiloader-loader'
+    id 'fabric-loom' version "${fabric_loom_version}"
+    id 'me.modmuss50.mod-publish-plugin' version "${mod_publish_version}"
 }
 
+// configureBlibConfigurations - kept under the same names, so the dependency block below is unchanged. Each one
+// excludes this mod's own group, exactly as the plugin did.
+configurations {
+    blibModCompileOnly {
+        exclude group: project.group.toString()
+    }
+    blibModRuntimeOnly {
+        exclude group: project.group.toString()
+    }
+    blibMod {
+        exclude group: project.group.toString()
+    }
+    modCompileOnly.extendsFrom(blibModCompileOnly, blibMod)
+    modLocalRuntime.extendsFrom(blibModRuntimeOnly, blibMod)
+}
+
+// configureDependencies
 dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${parchment_minecraft}:${parchment_version}@zip")
+    }
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    modImplementation "com.blib:blib-fabric-${minecraft_version}:${blib_version}"
+
+    // configureLoader (recipe viewers): compile against all three, run with the one chosen in gradle.properties.
+    modCompileOnly "dev.emi:emi-fabric:${emi_version}"
+    modCompileOnly "mezz.jei:jei-${minecraft_version}-fabric:${jei_version}"
+    modCompileOnly "me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}"
+    switch (recipe_viewer.toLowerCase()) {
+        case 'emi': modLocalRuntime "dev.emi:emi-fabric:${emi_version}"; break
+        case 'jei': modLocalRuntime "mezz.jei:jei-${minecraft_version}-fabric:${jei_version}"; break
+        case 'rei': modLocalRuntime "me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}"; break
+        default: break
+    }
+
+    // Unchanged from before the conversion.
     implementation "com.just:just-codec:${project.just_codec_version}"
     include "com.just:just-codec:${project.just_codec_version}"
     implementation "com.just:just-core:${project.just_core_version}"
@@ -23,3 +65,155 @@ dependencies {
         exclude group: 'com.blib'
     }
 }
+
+// configureLoom
+loom {
+    def accessWidener = project(':common').file("src/main/resources/${mod_id}.accesswidener")
+    if (accessWidener.exists()) {
+        accessWidenerPath = accessWidener
+    }
+
+    mixin {
+        defaultRefmapName = "${mod_id}.refmap.json"
+    }
+
+    runs {
+        client {
+            client()
+            configName = 'Fabric Client'
+            ideConfigGenerated(true)
+            runDir('runs/client')
+        }
+        server {
+            server()
+            configName = 'Fabric Server'
+            ideConfigGenerated(true)
+            runDir('runs/server')
+        }
+    }
+}
+
+// configureDatagen - datagen writes into this module, then everything is moved into common's generated tree.
+fabricApi {
+    configureDataGeneration {
+        modId = project.mod_id
+    }
+}
+
+tasks.named('runDatagen') {
+    doLast {
+        def generatedDir = new File(project.projectDir, 'src/main/generated')
+        def targetDir = new File(rootProject.projectDir, 'common/src/main/generated')
+
+        if (!generatedDir.exists()) {
+            logger.lifecycle('No generated data found at: {}', generatedDir)
+            return
+        }
+
+        targetDir.mkdirs()
+        project.copy {
+            from generatedDir
+            into targetDir
+        }
+        logger.lifecycle('Copied generated data to: {}', targetDir)
+        project.delete(generatedDir)
+        logger.lifecycle('Deleted original generated directory: {}', generatedDir)
+    }
+}
+
+// CurseForge / Modrinth / Discord publishing (BlibModPublishConfigurator). Only configured when key.properties
+// exists in the repo root, exactly as before - without it, publishMods is inert.
+def keyPropsFile = rootProject.file('key.properties')
+if (keyPropsFile.exists()) {
+    def releaseProp = new Properties()
+    keyPropsFile.withInputStream { releaseProp.load(it) }
+
+    publishMods {
+        changelog = rootProject.file('CHANGELOG.md').text
+        type = STABLE
+        file = tasks.named('remapJar').flatMap { it.archiveFile }
+        modLoaders.add('fabric')
+        dryRun = publish_dry_run.toBoolean()
+
+        def discordPublishWebhookUrl = dryRun.get()
+            ? releaseProp.getProperty('discordDryRunPublishWebhookUrl')
+            : releaseProp.getProperty('discordPublishWebhookUrl')
+
+        discord {
+            webhookUrl = discordPublishWebhookUrl
+            dryRunWebhookUrl = discordPublishWebhookUrl
+            username = discord_username
+            avatarUrl = discord_avatar_url
+
+            content = changelog.map { text ->
+                def maxEmbedCharacterCount = 4096
+                def header = "# A new version of ${project.mod_name} for Fabric has been released!\n"
+                def footer = "\n...and more! Check the mod page for more details."
+                def needsTruncation = (header.length() + text.length()) > maxEmbedCharacterCount
+                def maxContentLength = maxEmbedCharacterCount - header.length() - (needsTruncation ? footer.length() : 0)
+                def truncatedText = text
+
+                if (needsTruncation && text.length() > maxContentLength) {
+                    def candidate = text.take(maxContentLength)
+                    def lastNewline = candidate.lastIndexOf('\n')
+                    if (lastNewline != -1) {
+                        candidate = candidate.take(lastNewline)
+                    }
+                    truncatedText = candidate
+                }
+
+                header + truncatedText + (needsTruncation ? footer : '')
+            }
+
+            setPlatforms(publishMods.platforms.curseforge, publishMods.platforms.modrinth)
+
+            style {
+                look = 'MODERN'
+                thumbnailUrl = discord_thumbnail_url
+            }
+        }
+
+        curseforge {
+            projectId = curseforge_project_id
+            projectSlug = curseforge_project_slug
+            accessToken = releaseProp.getProperty('curseKey')
+            minecraftVersions.add(project.minecraft_version)
+            announcementTitle = 'Download from CurseForge'
+            javaVersions.add(JavaVersion.VERSION_21)
+            clientRequired = true
+            serverRequired = true
+
+            ['fabric-api', 'blib'].each { requiredSlug ->
+                requires { it.slug = requiredSlug }
+            }
+        }
+
+        modrinth {
+            projectId = modrinth_project_id
+            accessToken = releaseProp.getProperty('modrinthKey')
+            minecraftVersions.add(project.minecraft_version)
+            announcementTitle = 'Download from Modrinth'
+
+            ['fabric-api', 'blib'].each { requiredSlug ->
+                requires { it.slug = requiredSlug }
+            }
+        }
+    }
+}
+
+// ⚠⚠ DATAGEN CACHE. Datagen keeps hash files in common/src/main/generated/.cache and SKIPS writing any output
+// whose hash it believes is unchanged. When that cache drifts, files silently stop regenerating while the build
+// still reports BUILD SUCCESSFUL. It has bitten this project twice:
+//   - en_us.json froze before NET, VERITANIUM_DART, COMBI_STICK and GAUNTLET ever got names
+//   - yautja_jungle.json kept 2 loot pools when the source had 3, so the 5% combi stick drop never existed
+// Both looked like code bugs and were not. Clearing the cache first makes every run authoritative.
+//
+// ⚠ To also remove ORPHANS — files a provider no longer emits — delete the whole generated folder instead:
+//       delete file("${rootProject.projectDir}/common/src/main/generated")
+//   That is safe here: everything under generated/ is datagen output. The hand-written item models
+//   (combi_stick.json, gauntlet.json) live in common/src/main/RESOURCES and are not touched either way.
+tasks.matching { it.name == 'runDatagen' }.configureEach {
+    doFirst {
+        delete file("${rootProject.projectDir}/common/src/main/generated/.cache")
+    }
+}

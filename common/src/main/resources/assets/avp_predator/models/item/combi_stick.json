@@ -1,6 +1,7 @@
 {
   "credit": "Made with Blockbench",
   "parent": "builtin/entity",
+  "_comment": "Display values taken DIRECTLY FROM THE BBMODEL. The exported combi_stick_item.json was 8 units low on every Y translation - half a block - exactly as the gauntlet's export was. That is why the hand sat at the butt of the spear instead of the centre of the handle.",
   "texture_size": [
     64,
     64
@@ -9,29 +10,49 @@
     "thirdperson_righthand": {
       "translation": [
         0,
-        1.5,
-        2
+        0.75,
+        1
+      ],
+      "scale": [
+        0.75,
+        0.75,
+        0.75
       ]
     },
     "thirdperson_lefthand": {
       "translation": [
         0,
-        1.75,
-        2
+        0.75,
+        1
+      ],
+      "scale": [
+        0.75,
+        0.75,
+        0.75
       ]
     },
     "firstperson_righthand": {
       "rotation": [
-        -36,
+        -18.25,
         0,
         0
+      ],
+      "scale": [
+        0.75,
+        0.75,
+        0.75
       ]
     },
     "firstperson_lefthand": {
       "rotation": [
-        -36,
+        -18.25,
         0,
         0
+      ],
+      "scale": [
+        0.75,
+        0.75,
+        0.75
       ]
     },
     "ground": {
@@ -53,34 +74,40 @@
     },
     "gui": {
       "rotation": [
+        -180,
         0,
-        0,
-        -45
+        134.75
       ],
       "translation": [
-        2.5,
-        2.25,
+        -1,
+        1,
         0
-      ]
-    },
-    "head": {
+      ],
       "scale": [
-        0,
-        0,
-        0
+        0.65,
+        0.34,
+        0.65
       ]
     },
     "fixed": {
       "rotation": [
+        180,
         0,
-        0,
-        90
+        134.75
       ],
       "translation": [
-        -3,
-        0,
-        -2
+        -1,
+        1,
+        0
+      ],
+      "scale": [
+        0.65,
+        0.4,
+        0.65
       ]
     }
+  },
+  "textures": {
+    "particle": "avp_predator:item/combi_stick"
   }
 }

@@ -1,0 +1,9 @@
+{
+  "values": [
+    "minecraft:warden",
+    {
+      "id": "#avp_alien:aliens",
+      "required": false
+    }
+  ]
+}

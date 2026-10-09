@@ -1,0 +1,33 @@
+{
+  "values": [
+    "minecraft:wither",
+    "minecraft:ender_dragon",
+    "minecraft:warden",
+    "minecraft:elder_guardian",
+    "minecraft:ravager",
+    {
+      "id": "#avp_alien:praetorians",
+      "required": false
+    },
+    {
+      "id": "#avp_alien:predaliens",
+      "required": false
+    },
+    {
+      "id": "#avp_alien:crushers",
+      "required": false
+    },
+    {
+      "id": "#avp_alien:queens",
+      "required": false
+    },
+    {
+      "id": "#avp_alien:empresses",
+      "required": false
+    },
+    {
+      "id": "#avp_alien:harbingers",
+      "required": false
+    }
+  ]
+}

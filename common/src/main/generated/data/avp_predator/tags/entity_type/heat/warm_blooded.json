@@ -1,0 +1,24 @@
+{
+  "values": [
+    "minecraft:wolf",
+    "minecraft:fox",
+    "minecraft:cat",
+    "minecraft:ocelot",
+    "minecraft:piglin",
+    "minecraft:piglin_brute",
+    "minecraft:chicken",
+    "minecraft:parrot",
+    "minecraft:rabbit",
+    "minecraft:sniffer",
+    "minecraft:armadillo",
+    "minecraft:strider",
+    {
+      "id": "#gigeresque:gigeresquemutants",
+      "required": false
+    },
+    {
+      "id": "#gigeresque:gigeresqueneos",
+      "required": false
+    }
+  ]
+}

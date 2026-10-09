@@ -1,0 +1,26 @@
+{
+  "parent": "avp_predator:hunt/live_fire",
+  "criteria": {
+    "code": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "icon": {
+      "count": 1,
+      "id": "minecraft:iron_chestplate"
+    },
+    "title": {
+      "translate": "advancements.avp_predator.hunt.wy_ape_set.title"
+    },
+    "description": {
+      "translate": "advancements.avp_predator.hunt.wy_ape_set.description"
+    }
+  },
+  "requirements": [
+    [
+      "code"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

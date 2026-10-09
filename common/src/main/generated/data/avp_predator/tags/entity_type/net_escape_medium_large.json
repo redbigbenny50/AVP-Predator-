@@ -1,0 +1,15 @@
+{
+  "values": [
+    "minecraft:spider",
+    "minecraft:cave_spider",
+    "minecraft:polar_bear",
+    "minecraft:hoglin",
+    "minecraft:zoglin",
+    "minecraft:evoker",
+    "minecraft:illusioner",
+    {
+      "id": "slimpatch:evoker",
+      "required": false
+    }
+  ]
+}

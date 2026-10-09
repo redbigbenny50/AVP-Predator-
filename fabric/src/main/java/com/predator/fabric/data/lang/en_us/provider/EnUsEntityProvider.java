@@ -14,9 +14,21 @@ public class EnUsEntityProvider {
     private static final HashSet<EntityType<?>> TOUCHED_ENTRIES = new HashSet<>();
 
     public static final Consumer<FabricLanguageProvider.TranslationBuilder> CONSUMER = builder -> {
+        addEntity(builder, PredatorEntityTypes.PLASMA_BOLT, "Plasma Bolt");
         addEntity(builder, PredatorEntityTypes.SHURIKEN, "Shuriken");
+        addEntity(builder, PredatorEntityTypes.VERITANIUM_DART, "Veritanium Dart");
+        addEntity(builder, PredatorEntityTypes.FIRE_PELLET, "Fire Pellet");
+        addEntity(builder, PredatorEntityTypes.YAUTJA_GRENADE, "Yautja Grenade");
+        addEntity(builder, PredatorEntityTypes.PLASMA_CLOUD, "Plasma Cloud");
+        addEntity(builder, PredatorEntityTypes.PLASMA_BOLT_ARROW, "Plasma Bolt");
+        addEntity(builder, PredatorEntityTypes.WHIP_LASH, "Whip Lash");
+        addEntity(builder, PredatorEntityTypes.WHIP_HOOK, "Whip Hook");
         addEntity(builder, PredatorEntityTypes.SMART_DISC, "Smart Disc");
-        addEntity(builder, PredatorEntityTypes.YAUTJA, "Yautja");
+        addEntity(builder, PredatorEntityTypes.PLASMA_SHURIKEN, "Plasma Shuriken");
+        addEntity(builder, PredatorEntityTypes.VERITANIUM_ARROW, "Veritanium Arrow");
+        addEntity(builder, PredatorEntityTypes.NET, "Net");
+        addEntity(builder, PredatorEntityTypes.COMBI_STICK, "Combi Stick");
+        addEntity(builder, PredatorEntityTypes.YAUTJA, "Jungle Yautja");
 
         var missingEntries = PredatorEntityTypes.TYPE_REGISTRY.computeMissingEntries(TOUCHED_ENTRIES);
 

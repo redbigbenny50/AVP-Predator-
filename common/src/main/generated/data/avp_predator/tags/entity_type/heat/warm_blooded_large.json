@@ -1,0 +1,57 @@
+{
+  "values": [
+    "minecraft:villager",
+    "minecraft:wandering_trader",
+    "minecraft:pillager",
+    "minecraft:vindicator",
+    "minecraft:evoker",
+    "minecraft:illusioner",
+    "minecraft:witch",
+    "minecraft:cow",
+    "minecraft:mooshroom",
+    "minecraft:pig",
+    "minecraft:sheep",
+    "minecraft:goat",
+    "minecraft:horse",
+    "minecraft:donkey",
+    "minecraft:mule",
+    "minecraft:llama",
+    "minecraft:trader_llama",
+    "minecraft:camel",
+    "minecraft:polar_bear",
+    "minecraft:panda",
+    "minecraft:hoglin",
+    "minecraft:ravager",
+    "minecraft:dolphin",
+    "minecraft:ender_dragon",
+    {
+      "id": "slimpatch:evoker",
+      "required": false
+    },
+    {
+      "id": "slimpatch:female_villager",
+      "required": false
+    },
+    {
+      "id": "slimpatch:human_trader",
+      "required": false
+    },
+    {
+      "id": "slimpatch:male_villager",
+      "required": false
+    },
+    {
+      "id": "slimpatch:pillager",
+      "required": false
+    },
+    {
+      "id": "slimpatch:vindicator",
+      "required": false
+    },
+    {
+      "id": "slimpatch:wandering_trader",
+      "required": false
+    },
+    "avp_predator:yautja_jungle"
+  ]
+}

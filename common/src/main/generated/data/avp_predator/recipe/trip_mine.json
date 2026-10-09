@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "T": {
+      "item": "minecraft:tnt"
+    },
+    "V": {
+      "item": "avp_predator:veritanium_shard"
+    }
+  },
+  "pattern": [
+    " V ",
+    " T ",
+    "V V"
+  ],
+  "result": {
+    "count": 3,
+    "id": "avp_predator:trip_mine"
+  }
+}

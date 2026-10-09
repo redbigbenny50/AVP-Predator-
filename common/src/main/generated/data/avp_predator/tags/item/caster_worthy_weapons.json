@@ -1,0 +1,32 @@
+{
+  "values": [
+    {
+      "id": "avp_human:f903we_rifle",
+      "required": false
+    },
+    {
+      "id": "avp_human:m41a_pulse_rifle",
+      "required": false
+    },
+    {
+      "id": "avp_human:m42a3_sniper_rifle",
+      "required": false
+    },
+    {
+      "id": "avp_human:m4ra_battle_rifle",
+      "required": false
+    },
+    {
+      "id": "avp_human:m56_smartgun",
+      "required": false
+    },
+    {
+      "id": "avp_human:m6b_rocket_launcher",
+      "required": false
+    },
+    {
+      "id": "avp_human:old_painless",
+      "required": false
+    }
+  ]
+}

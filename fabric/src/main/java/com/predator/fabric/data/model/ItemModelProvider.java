@@ -27,6 +27,10 @@ public class ItemModelProvider extends FabricModelProvider {
     public void generateItemModels(ItemModelGenerators generators) {
         generateStandardItem(generators, PredatorItems.SHURIKEN);
         generateStandardItem(generators, PredatorItems.SMART_DISC);
+        generateStandardItem(generators, PredatorItems.PLASMA_SHURIKEN);
+        generateStandardItem(generators, PredatorItems.PLASMA_CORE);
+        generateStandardItem(generators, PredatorItems.VERITANIUM_SCRAP);
+        generateStandardItem(generators, PredatorItems.VERITANIUM_ARROW);
 
         generateStandardItem(generators, PredatorArmorItems.JUNGLE_PREDATOR_BOOTS);
         generateStandardItem(generators, PredatorArmorItems.JUNGLE_PREDATOR_CHESTPLATE);
@@ -36,14 +40,26 @@ public class ItemModelProvider extends FabricModelProvider {
         generateStandardItem(generators, PredatorItems.PREDATOR_MUSIC_DISC_1);
         generateStandardItem(generators, PredatorItems.PREDATOR_MUSIC_DISC_1_FRAGMENT);
         generateStandardItem(generators, PredatorItems.MUD_BUCKET);
+        generateStandardItem(generators, PredatorItems.CLOAKING_DEVICE);
 
         generateHandheldItem(generators, PredatorItems.VERITANIUM_AXE);
         generateHandheldItem(generators, PredatorItems.VERITANIUM_HOE);
         generateHandheldItem(generators, PredatorItems.VERITANIUM_PICKAXE);
         generateHandheldItem(generators, PredatorItems.VERITANIUM_SHOVEL);
         generateHandheldItem(generators, PredatorItems.VERITANIUM_SWORD);
+        generateHandheldItem(generators, PredatorItems.PLASMA_SWORD);
 
         generateStandardItem(generators, PredatorItems.VERITANIUM_SHARD);
+        generateStandardItem(generators, PredatorItems.NET);
+
+        // ⚠ COMBI_STICK and GAUNTLET are NOT generated. They ship hand-written models with
+        // "parent": "builtin/entity", which tells vanilla to build NOTHING and hand rendering to the registered
+        // item renderer. generateStandardItem would overwrite them with item/generated sprite models, and then
+        // vanilla's baked sprite AND the geo model both draw — which is the jumbled mess.
+        // ⚠ NOT generated — the gauntlet ships a hand-written models/item/gauntlet.json carrying only display
+        // transforms, because its geometry comes from the geo models and datagen would overwrite it with a sprite.
+        generateStandardItem(generators, PredatorItems.VERITANIUM_DART);
+        generateStandardItem(generators, PredatorItems.FIRE_PELLET);
 
         PredatorSpawnEggItems.REGISTRY.getAll()
             .forEach(spawnEggItem -> generateStandardItem(generators, spawnEggItem.get()));

@@ -20,6 +20,14 @@ public class EnUsItemProvider {
         // Combat Items
         addItem(builder, PredatorItems.SHURIKEN, "Shuriken");
         addItem(builder, PredatorItems.SMART_DISC, "Smart Disc");
+        addItem(builder, PredatorItems.PLASMA_SHURIKEN, "Plasma Shuriken");
+        addItem(builder, PredatorItems.PLASMA_CORE, "Plasma Core");
+        addItem(builder, PredatorItems.HAND_CASTER, "Hand Caster");
+        addItem(builder, PredatorItems.VERITANIUM_SCRAP, "Veritanium Scrap");
+        builder.add("item.avp_predator.hand_caster.shots", "Shots: %s / %s");
+        builder.add("item.avp_predator.hand_caster.no_core", "No plasma core to reload");
+        addItem(builder, PredatorItems.PLASMA_SWORD, "Plasma Sword");
+        addItem(builder, PredatorItems.VERITANIUM_ARROW, "Veritanium Arrow");
 
         addItem(builder, PredatorArmorItems.JUNGLE_PREDATOR_BOOTS, "Predator Boots");
         addItem(builder, PredatorArmorItems.JUNGLE_PREDATOR_CHESTPLATE, "Predator Chestplate");
@@ -31,9 +39,39 @@ public class EnUsItemProvider {
         addItem(builder, PredatorItems.PREDATOR_MUSIC_DISC_1_FRAGMENT, "Disc Fragment");
         builder.add(PredatorItems.PREDATOR_MUSIC_DISC_1_FRAGMENT.get().getDescriptionId() + ".desc", "Music Disc - Hunter");
         addItem(builder, PredatorItems.VERITANIUM_SHARD, "Veritanium Shard");
+        addItem(builder, PredatorItems.YAUTJA_BLOOD_BOTTLE, "Bottle of Yautja Blood");
+        addItem(builder, PredatorItems.PRED_GRENADE_EXPLOSIVE, "Explosive Yautja Grenade");
+        addItem(builder, PredatorItems.PRED_GRENADE_FIRE, "Fire Yautja Grenade");
+        addItem(builder, PredatorItems.PRED_GRENADE_STICKY, "Sticky Yautja Grenade");
+        addItem(builder, PredatorItems.PRED_GRENADE_FREEZE, "Freeze Yautja Grenade");
+        addItem(builder, PredatorItems.PRED_GRENADE_IRRADIATED, "Irradiated Yautja Grenade");
+        addItem(builder, PredatorItems.NET, "Net");
+        addItem(builder, PredatorItems.COMBI_STICK, "Combi Stick");
+        addItem(builder, PredatorItems.WHIP, "Veritanium Whip");
+        addItem(builder, PredatorItems.CHAIN_WHIP, "Chain Whip");
+        addItem(builder, PredatorItems.VERITANIUM_BOW, "Veritanium Bow");
+        addItem(builder, PredatorItems.PLASMA_BOW, "Plasma Bow");
+        addItem(builder, PredatorItems.BATTLEAXE, "Battleaxe");
+        addItem(builder, PredatorItems.GAUNTLET, "Wrist Gauntlet");
+
+        builder.add("bossbar.avp_predator.net_struggle", "Struggle!");
+        addItem(builder, PredatorItems.VERITANIUM_DART, "Veritanium Dart");
+        addItem(builder, PredatorItems.FIRE_PELLET, "Fire Pellet");
 
         // Tools & Utilities Items
         addItem(builder, PredatorItems.MUD_BUCKET, "Mud Bucket");
+        addItem(builder, PredatorItems.CLOAKING_DEVICE, "Cloaking Device");
+
+        // Cloak action-bar lines
+        builder.add("message.avp_predator.cloak.activated", "Cloak activated");
+        builder.add("message.avp_predator.cloak.deactivated", "Cloak deactivated");
+        builder.add("message.avp_predator.cloak.overloaded", "Cloak overloaded");
+        builder.add("effect.avp_predator.cloak", "Cloaked");
+        builder.add("effect.avp_predator.roar_stun", "Stunned");
+        builder.add("effect.avp_predator.adrenaline_rush", "Adrenaline Rush");
+        builder.add("subtitles.cloak.cloak_on", "Cloak engages");
+        builder.add("subtitles.cloak.cloak_off", "Cloak drops");
+        builder.add("subtitles.cloak.cloak_wet_loop", "Cloak arcs in water");
         addItem(builder, PredatorItems.VERITANIUM_AXE, "Veritanium Axe");
         addItem(builder, PredatorItems.VERITANIUM_HOE, "Veritanium Hoe");
         addItem(builder, PredatorItems.VERITANIUM_PICKAXE, "Veritanium Pickaxe");
@@ -41,7 +79,7 @@ public class EnUsItemProvider {
         addItem(builder, PredatorItems.VERITANIUM_SWORD, "Veritanium Sword");
 
         // Spawn Egg Items
-        addItem(builder, PredatorSpawnEggItems.YAUTJA_SPAWN_EGG, "Yautja Spawn Egg");
+        addItem(builder, PredatorSpawnEggItems.YAUTJA_SPAWN_EGG, "Jungle Yautja Spawn Egg");
 
         var missingEntries = PredatorItems.REGISTRY.computeMissingEntries(TOUCHED_ENTRIES);
         var filteredMissingEntries = missingEntries

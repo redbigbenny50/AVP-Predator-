@@ -1,0 +1,28 @@
+{
+  "criteria": {
+    "tick": {
+      "trigger": "minecraft:tick"
+    }
+  },
+  "display": {
+    "icon": {
+      "count": 1,
+      "id": "avp_predator:gauntlet"
+    },
+    "title": {
+      "translate": "advancements.avp_predator.hunt.root.title"
+    },
+    "description": {
+      "translate": "advancements.avp_predator.hunt.root.description"
+    },
+    "background": "minecraft:textures/block/jungle_log.png",
+    "show_toast": false,
+    "announce_to_chat": false
+  },
+  "requirements": [
+    [
+      "tick"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

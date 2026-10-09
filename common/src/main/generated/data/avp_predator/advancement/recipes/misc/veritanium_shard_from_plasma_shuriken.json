@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_plasma_shuriken": {
+      "conditions": {
+        "items": [
+          {
+            "items": "avp_predator:plasma_shuriken"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "avp_predator:veritanium_shard_from_plasma_shuriken"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_plasma_shuriken"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "avp_predator:veritanium_shard_from_plasma_shuriken"
+    ]
+  }
+}

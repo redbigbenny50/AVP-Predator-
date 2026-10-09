@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "F": {
+      "item": "minecraft:feather"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "V": {
+      "item": "avp_predator:veritanium_shard"
+    }
+  },
+  "pattern": [
+    "V",
+    "S",
+    "F"
+  ],
+  "result": {
+    "count": 4,
+    "id": "avp_predator:veritanium_arrow"
+  }
+}

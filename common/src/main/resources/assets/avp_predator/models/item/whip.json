@@ -1,0 +1,14 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "avp_predator:item/whip"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "avp_predator:extended": 1
+      },
+      "model": "avp_predator:item/whip_extended"
+    }
+  ]
+}

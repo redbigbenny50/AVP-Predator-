@@ -6,8 +6,46 @@
     "minecraft:spider",
     "minecraft:allay",
     "minecraft:vex",
+    "minecraft:ghast",
     "minecraft:enderman",
     "minecraft:ender_dragon",
-    "minecraft:endermite"
+    "minecraft:endermite",
+    "minecraft:warden",
+    "minecraft:guardian",
+    "minecraft:elder_guardian",
+    "minecraft:breeze",
+    "minecraft:shulker",
+    "minecraft:shulker_bullet",
+    "minecraft:snowball",
+    "minecraft:wind_charge",
+    "minecraft:breeze_wind_charge",
+    {
+      "id": "#gigeresque:gigeresqueclassic",
+      "required": false
+    },
+    {
+      "id": "#gigeresque:gigeresqueaqua",
+      "required": false
+    },
+    {
+      "id": "#gigeresque:gigeresquerunners",
+      "required": false
+    },
+    {
+      "id": "#gigeresque:gigeresquetemplebeasts",
+      "required": false
+    },
+    {
+      "id": "#gigeresque:gigeresquemisc",
+      "required": false
+    },
+    {
+      "id": "gigeresque:rom_alien",
+      "required": false
+    },
+    {
+      "id": "gigeresque:aqua_egg",
+      "required": false
+    }
   ]
 }
