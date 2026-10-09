@@ -240,12 +240,12 @@ processResources {
 publishing {
     repositories {
         maven {
-            name = mod_id
-            url = uri(maven_publish_url)
+            name = project.mod_id
+            url = "https://maven.aliensvspredatormod.com/releases"
 
-            credentials {
-                username = System.getenv(maven_username_env)
-                password = System.getenv(maven_password_env)
+            credentials(PasswordCredentials) {
+                username = findProperty("avpMavenUsername")
+                password = findProperty("avpMavenPassword")
             }
 
             authentication {
