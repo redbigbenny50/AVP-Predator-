@@ -63,6 +63,7 @@
     "MixinPlayerRenderer_GauntletArmLayer",
     "cloak.MixinAzArmorModel_Cloak",
     "cloak.MixinEntityRenderDispatcher_Cloak",
+    "cloak.MixinLevelRenderer_CloakBatch",
     "cloak.MixinLevelRenderer_SceneColorCapture",
     "cloak.MixinMinecraft_CloakToggle",
     "vision.MixinAzEntityRenderer_VisionClassification",

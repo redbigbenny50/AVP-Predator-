@@ -3,7 +3,7 @@
 // artifacts the loader modules build from.
 plugins {
     id 'multiloader-common'
-    id 'net.neoforged.moddev' version "${moddev_version}"
+    id 'net.neoforged.moddev'
 }
 
 // applyAndConfigureNeoForm
