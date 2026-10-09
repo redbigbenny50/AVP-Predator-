@@ -3,7 +3,7 @@
 // Everything the plugin did for NeoForge is written out below, in the plugin's order.
 plugins {
     id 'multiloader-loader'
-    id 'net.neoforged.moddev' version "${moddev_version}"
+    id 'net.neoforged.moddev'
     id 'me.modmuss50.mod-publish-plugin' version "${mod_publish_version}"
 }
 

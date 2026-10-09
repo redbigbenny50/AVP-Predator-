@@ -1,6 +1,9 @@
 // Sep 27 - converted from the blib-gradle plugin. The blib { } block that used to live here is now plain properties in
 // gradle.properties, and the build logic it drove lives in buildSrc (multiloader-common / multiloader-loader) and in
 // each module's build.gradle. Everything else in this file is unchanged.
+plugins {
+    id 'net.neoforged.moddev' version "${moddev_version}" apply false
+}
 
 allprojects {
     repositories {
