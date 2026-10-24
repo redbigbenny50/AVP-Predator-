@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "avp_predator:block/village_chiseled_trophy"
+    },
+    "facing=east": {
+      "model": "avp_predator:block/village_chiseled_trophy",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "avp_predator:block/village_chiseled_trophy",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "avp_predator:block/village_chiseled_trophy",
+      "y": 270
+    }
+  }
+}

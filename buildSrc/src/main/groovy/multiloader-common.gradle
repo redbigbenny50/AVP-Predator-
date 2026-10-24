@@ -32,6 +32,25 @@ java {
 // configureRepositories. mavenLocal and avpReleases still come from the root build.gradle's allprojects block, which
 // runs before this, exactly as before.
 repositories {
+    // Oct 9 - com.just (just-core, just-codec, just-goap) comes from BLib's local repository, one folder over at
+    // ../blib/libs/just-maven, WHEN that folder exists. just-goap 0.4.1 is our own build and exists nowhere public; this
+    // mod declares the just libraries directly (and bundles them on Fabric) AND gets them through BLib's POM, so both
+    // routes must find it. exclusiveContent stops Gradle asking any other repository for com.just.
+    // Conditional since Azure's merge: on a machine without the blib repo beside this one (his), the block is skipped
+    // and com.just resolves from mavenLocal / the remote mavens instead - so the same file builds on both setups.
+    def justLocal = rootProject.file('../blib/libs/just-maven')
+    if (justLocal.isDirectory()) {
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = 'JustLocal'
+                    url = justLocal.toURI()
+                }
+            }
+            filter { includeGroup('com.just') }
+        }
+    }
+
     maven { url = 'https://maven.bvanseghi.dev/avp_alien' }
     maven { url = 'https://maven.bvanseghi.dev/avp_human' }
     maven { url = 'https://maven.bvanseghi.dev/blib_engine' }

@@ -90,12 +90,34 @@ public final class HuntDirector {
         var huntLedger = HuntLedger.get(serverLevel.getServer());
         var honorLedger = HonorLedger.get(serverLevel.getServer());
 
+        // Oct 16 - [stated] the game rule switches the hunting off entirely: nothing begins, and anything running ends.
+        var disabled = com.predator.common.registry.init.PredatorGameRules.areYautjaHuntsDisabled(serverLevel);
+
+        // ⚠ OFFLINE players' hunts too, not just those online below. Their Hunter only removes itself once its hunt is
+        // gone from the ledger (Yautja checks isCurrentHunter every 100 ticks), so a hunt left in the ledger kept its
+        // Hunter waiting by an empty base until that player logged back in. Once a second is plenty for a switch.
+        if (disabled && gameTime % 20 == 0) {
+            for (var running : huntLedger.runningHunts()) {
+                withdraw(serverLevel, huntLedger, running, HuntLedger.Stage.NONE);
+            }
+        }
+
         for (var player : serverLevel.players()) {
-            if (!player.isAlive() || player.isSpectator()) {
+            var entry = huntLedger.entry(player.getUUID());
+
+            // ⚠ BEFORE the alive/spectator skip: a dead or spectating player's running hunt still has to end. Only
+            // ever withdraws a hunt that exists, so an idle player costs one field read.
+            if (disabled || entry.exempt) {
+                if (entry.stage != HuntLedger.Stage.NONE) {
+                    withdraw(serverLevel, huntLedger, entry, HuntLedger.Stage.NONE);
+                }
+
                 continue;
             }
 
-            var entry = huntLedger.entry(player.getUUID());
+            if (!player.isAlive() || player.isSpectator()) {
+                continue;
+            }
 
             if (gameTime % VISIT_SAMPLE_INTERVAL == 0) {
                 huntLedger.recordVisit(entry, player.blockPosition());
@@ -123,11 +145,20 @@ public final class HuntDirector {
             case NONE -> {
                 // ⚠ Not the same moon a hunt just ended under (a debug stop, or a hunt over before dawn): the next one.
                 if (worthy && isNight && level.getMoonPhase() == 0 && day != entry.moonDay) {
-                    ledger.beginMoon(entry, day);
-                    player.sendSystemMessage(
-                        Component.literal("The hunters moon shines a foreboding presence")
-                            .withStyle(ChatFormatting.DARK_RED, ChatFormatting.ITALIC)
-                    );
+                    // Oct 16 - the breather after a lost hunt: this moon passes them by, and the next one is a hunt.
+                    if (entry.skipNextMoon) {
+                        ledger.skipMoon(entry, day);
+                        player.sendSystemMessage(
+                            Component.literal("The hunters moon rises, but no hunter comes for you tonight")
+                                .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC)
+                        );
+                    } else {
+                        ledger.beginMoon(entry, day);
+                        player.sendSystemMessage(
+                            Component.literal("The hunters moon shines a foreboding presence")
+                                .withStyle(ChatFormatting.DARK_RED, ChatFormatting.ITALIC)
+                        );
+                    }
                 }
             }
             case MOON -> {
@@ -1045,6 +1076,10 @@ public final class HuntDirector {
             var honor = honorLedger.entry(playerId).honor() + YautjaHonorConfig.killHonor(HunterLadder.rungOf(hunter.getTier()));
 
             honorLedger.setHonor(playerId, honor, YautjaHonorConfig.unlockThreshold());
+
+            if (player != null) {
+                YautjaHonor.awardWorthyIfDue(player);
+            }
             HunterLadder.unlock(entry, honor);
             HunterLadder.climb(entry);
         }
@@ -1085,6 +1120,28 @@ public final class HuntDirector {
             return;
         }
 
+        // Oct 16 - killed by their own Hunter is the one way a hunt is LOST, so it earns the breather.
+        ledger.markLost(entry);
+
+        // Oct 16 - and costs honor ([stated] 50), floored at the unlock threshold so they always stay huntable.
+        // ⚠ The Hunter ladder is NOT re-locked: tiers a player has unlocked stay unlocked.
+        var honorLedger = HonorLedger.get(level.getServer());
+        var before = honorLedger.entry(player.getUUID()).honor();
+        var after = com.predator.common.config.YautjaHonorConfig.honorAfterLoss(before);
+
+        if (after != before) {
+            honorLedger.setHonor(player.getUUID(), after, com.predator.common.config.YautjaHonorConfig.unlockThreshold());
+        }
+
+        // [stated] "you should also get a chat message stating you lost honor". Sent in the same tick as the death;
+        // chat still reaches a player on the death screen. It names what was actually taken, which the floor can make
+        // less than loss_honor, and says the honor HOLDS when the floor took nothing at all.
+        var lost = before - after;
+        var message = lost > 0
+            ? "Your Hunter has claimed you. You lost " + lost + " honor (" + after + " remaining)."
+            : "Your Hunter has claimed you, but your honor holds at " + after + ".";
+
+        player.sendSystemMessage(Component.literal(message).withStyle(ChatFormatting.DARK_RED, ChatFormatting.ITALIC));
         withdraw(level, ledger, entry, HuntLedger.Stage.NONE);
     }
 
@@ -1133,6 +1190,24 @@ public final class HuntDirector {
         }
 
         return killer.getUUID().equals(HuntLedger.get(level.getServer()).entry(player.getUUID()).hunterId);
+    }
+
+    /**
+     * Oct 16 - [stated] "a command ops can use to exempt a player from hunts". Exempting a player mid-hunt ends it now,
+     * online or not: a loaded Hunter leaves in its smoke bomb, and one in an unloaded chunk removes itself when next
+     * loaded, because its hunt is gone from the ledger. Their honor is untouched. {@return whether the exemption
+     * changed}
+     */
+    public static boolean setExempt(net.minecraft.server.MinecraftServer server, java.util.UUID player, boolean exempt) {
+        var ledger = HuntLedger.get(server);
+        var changed = ledger.setExempt(player, exempt);
+        var entry = ledger.entry(player);
+
+        if (exempt && entry.stage != HuntLedger.Stage.NONE) {
+            withdraw(server.overworld(), ledger, entry, HuntLedger.Stage.NONE);
+        }
+
+        return changed;
     }
 
     /** Debug: ends a player's hunt, sending away any Hunter that is out. */

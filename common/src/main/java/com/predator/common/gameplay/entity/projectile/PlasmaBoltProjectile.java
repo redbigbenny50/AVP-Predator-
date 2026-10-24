@@ -166,7 +166,9 @@ public class PlasmaBoltProjectile extends ThrowableProjectile {
         }
 
         if (level() instanceof ServerLevel serverLevel) {
-            PlasmaCaster.spawnBoltTrail(serverLevel, position());
+            // ⚠ Along the whole tick's flight, not just where it ended: at 3 blocks a tick one puff per tick is a
+            // dotted line. xo/yo/zo is where it stood when this tick began.
+            PlasmaCaster.spawnBoltTrailAlong(serverLevel, new Vec3(xo, yo, zo), position());
         }
 
         life++;

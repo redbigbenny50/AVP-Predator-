@@ -42,6 +42,13 @@ public final class YautjaHonor {
 
     public static final ResourceLocation LIVE_FIRE = PredatorResources.location("hunt/live_fire");
 
+    /**
+     * Oct 10 - [stated] "an achievement for when you hit 150 honor that says 'Hunt's Desire - Being deemed worthy of
+     * being hunted'". Granted the moment a player becomes WORTHY - honor reaching the unlock threshold (150 by default,
+     * {@code unlock_threshold} in the honor config) - by whatever route got them there. Pays no honor itself.
+     */
+    public static final ResourceLocation HUNTS_DESIRE = PredatorResources.location("hunt/hunts_desire");
+
     public static final ResourceLocation WY_APE_SET = PredatorResources.location("hunt/wy_ape_set");
 
     public static final ResourceLocation SURVIVE_THE_HUNT = PredatorResources.location("hunt/survive_the_hunt");
@@ -85,12 +92,24 @@ public final class YautjaHonor {
         var ledger = HonorLedger.get(player.server);
         var becameWorthy = ledger.credit(player.getUUID(), advancement.toString(), honor, YautjaHonorConfig.unlockThreshold());
 
+        awardWorthyIfDue(player);
+
         if (becameWorthy) {
             Predator.LOGGER.info(
                 "{} is now worthy of the hunt ({} honor)",
                 player.getName().getString(),
                 ledger.entry(player.getUUID()).honor()
             );
+        }
+    }
+
+    /**
+     * Oct 10 - grants Hunt's Desire if this player is (or has ever been) worthy and does not hold it yet. Called after
+     * every honor change and on login, so a player who was already worthy before this advancement existed gets it too.
+     */
+    public static void awardWorthyIfDue(ServerPlayer player) {
+        if (HonorLedger.get(player.server).entry(player.getUUID()).worthy()) {
+            award(player, HUNTS_DESIRE);
         }
     }
 
@@ -111,6 +130,8 @@ public final class YautjaHonor {
                 onAdvancementCompleted(player, location);
             }
         }
+
+        awardWorthyIfDue(player);
     }
 
     // ---------------------------------------------------------------- code-awarded advancements

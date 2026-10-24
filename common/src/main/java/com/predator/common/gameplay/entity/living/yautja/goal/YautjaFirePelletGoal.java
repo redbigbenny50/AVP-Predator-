@@ -106,5 +106,19 @@ public class YautjaFirePelletGoal extends Goal {
         pellet.setPos(eye.x, eye.y - 0.3D, eye.z);
         pellet.shoot(aim.x, aim.y, aim.z, PELLET_SPEED, 0.0F);
         level.addFreshEntity(pellet);
+
+        // Oct 14 - silent before; now the player's gauntlet pellet sound (GauntletLauncher: volume 0.6, pitch 1.4).
+        if (!yautja.isSilent()) {
+            level.playSound(
+                null,
+                yautja.getX(),
+                yautja.getY(),
+                yautja.getZ(),
+                com.predator.common.registry.init.PredatorSoundEvents.GAUNTLET_PELLET.get(),
+                net.minecraft.sounds.SoundSource.HOSTILE,
+                0.6F,
+                1.4F
+            );
+        }
     }
 }

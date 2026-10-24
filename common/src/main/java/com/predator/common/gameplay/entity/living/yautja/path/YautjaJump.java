@@ -83,6 +83,14 @@ public final class YautjaJump {
             return;
         }
 
+        // Oct 23 - the pathfinder now plans leaps too (YautjaPathing.LEAP), and BLib launches those itself at the
+        // take-off. On a step that is a planned leap this stands aside, so the two never both throw the yautja at the
+        // same edge. Everywhere else it is the fallback it always was: an edge the route did not plan a leap at.
+        var currentNode = yautja.getPathNavigator().getState().getCurrentNode();
+        if (currentNode != null && currentNode.isLeap()) {
+            return;
+        }
+
         // ⚠ Settled on its feet, not merely touching ground this tick. Without it a landing yautja can clip the
         // ground for one tick, read the next drop as a gap and launch again — a chain of leaps across terrain
         // that only ever needed walking down.

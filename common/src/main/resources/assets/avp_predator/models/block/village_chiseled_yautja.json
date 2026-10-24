@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "avp_predator:block/village_chiseled_mask",
+    "north": "avp_predator:block/village_chiseled_mask",
+    "east": "avp_predator:block/village_chiseled_yautja",
+    "south": "avp_predator:block/village_chiseled_mask",
+    "west": "avp_predator:block/village_chiseled_triangle",
+    "up": "avp_predator:block/village_chiseled_circle",
+    "down": "avp_predator:block/village_chiseled_circle"
+  }
+}

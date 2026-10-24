@@ -6,6 +6,8 @@ import com.predator.common.gameplay.entity.living.yautja.animation.YautjaAttackA
 import com.predator.common.gameplay.entity.living.yautja.util.YautjaPredicates;
 import com.predator.common.gameplay.entity.projectile.NetProjectile;
 import com.predator.common.gameplay.net.PredatorNet;
+import com.predator.common.registry.init.PredatorSoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.ai.goal.Goal;
 
 /**
@@ -108,5 +110,23 @@ public class YautjaNetGoal extends Goal {
 
         net.shootFromRotation(yautja, yautja.getXRot(), yautja.getYRot(), 0.0F, 1.4F, 1.0F);
         yautja.level().addFreshEntity(net);
+
+        // Oct 14 - the yautja's net was silent; it now makes the same launch sound as the player's gauntlet net
+        // (GauntletLauncher: volume 0.8, pitch 1.0), from the hostile channel.
+        if (!yautja.isSilent()) {
+            yautja.level()
+                .playSound(
+                    null,
+                    yautja.getX(),
+                    yautja.getY(),
+                    yautja.getZ(),
+                    PredatorSoundEvents.GAUNTLET_NET.get(),
+                    // ⚠ Imported, not written out in full: the local "net" (the projectile) shadows the net.minecraft
+                    // package inside this method.
+                    SoundSource.HOSTILE,
+                    0.8F,
+                    1.0F
+                );
+        }
     }
 }

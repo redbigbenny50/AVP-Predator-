@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "avp_predator:village_stone"
+  },
+  "result": {
+    "count": 1,
+    "id": "avp_predator:village_brick_stairs"
+  }
+}

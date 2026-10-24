@@ -66,6 +66,7 @@ public final class PredatorHonorCommand {
         var amount = IntegerArgumentType.getInteger(context, "amount");
         var ledger = HonorLedger.get(player.server);
         var becameWorthy = ledger.setHonor(player.getUUID(), amount, YautjaHonorConfig.unlockThreshold());
+        com.predator.common.gameplay.hunt.YautjaHonor.awardWorthyIfDue(player);
 
         report(context, player, ledger, becameWorthy);
 

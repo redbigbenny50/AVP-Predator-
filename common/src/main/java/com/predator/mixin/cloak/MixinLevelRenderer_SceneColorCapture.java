@@ -21,8 +21,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinLevelRenderer_SceneColorCapture {
 
     @Inject(method = "renderLevel", at = @At(value = "CONSTANT", args = "stringValue=entities"))
-    private void predator$captureSceneColour(CallbackInfo callbackInfo) {
-        PredatorSceneColor.capture();
+    private void predator$captureSceneColour(
+        net.minecraft.client.DeltaTracker deltaTracker,
+        boolean renderBlockOutline,
+        net.minecraft.client.Camera camera,
+        net.minecraft.client.renderer.GameRenderer gameRenderer,
+        net.minecraft.client.renderer.LightTexture lightTexture,
+        org.joml.Matrix4f frustumMatrix,
+        org.joml.Matrix4f projectionMatrix,
+        CallbackInfo callbackInfo
+    ) {
+        // Oct 9: the camera and both matrices let the copy be limited to the part of the screen a cloak covers.
+        PredatorSceneColor.capture(camera, frustumMatrix, projectionMatrix);
     }
 
     /**

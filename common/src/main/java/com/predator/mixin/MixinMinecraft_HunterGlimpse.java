@@ -14,5 +14,7 @@ public abstract class MixinMinecraft_HunterGlimpse {
     @Inject(method = "tick", at = @At("RETURN"))
     private void avp_predator$tickHunterGlimpse(CallbackInfo callback) {
         HunterGlimpseClient.clientTick((Minecraft) (Object) this);
+        // Oct 23 - and finish the Walkers/ReMorphed hook once our entity types exist (a no-op after the first tick).
+        com.predator.compatibility.walkers.client.WalkersShapeAnimations.retryIfPending();
     }
 }

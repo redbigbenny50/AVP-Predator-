@@ -29,7 +29,6 @@ import com.predator.common.registry.init.item.PredatorBlockItems;
 import com.predator.common.registry.init.item.PredatorItems;
 import com.predator.common.registry.init.item.block.PredatorSpawnEggItems;
 import com.predator.mixin.ParrotSoundMapAccessor;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,26 +120,34 @@ public class Predator {
 
         // The hunt: the Hunter's Moon, phase 1, and (pass 3) the attack. Overworld only.
         MOD.events().postLevelTick().register(com.predator.common.gameplay.hunt.HuntDirector::tickLevel);
+        // Oct 16: a weapon held on a yautja for 2-3 s is felt - it turns on the shooter. See YautjaAimSense.
+        MOD.events().postLevelTick().register(com.predator.common.gameplay.entity.living.yautja.YautjaAimSense::tickLevel);
         // The freeze grenade's ice: thaws it back to what it was, and keeps whatever stands in it freezing.
         MOD.events().postLevelTick().register(com.predator.common.gameplay.hunt.FreezePatches::tickLevel);
         MOD.events().onServerStarted().register(PredatorGameRules::applySingleplayerDefault);
         MOD.events().onPlayerStartTrackingEntity().register(PredatorNet::onStartTracking);
 
-        // TODO: Only run this once on server start.
+        // Oct 14 - still hooked to the level tick (the parrot map must be filled after registries exist), but it now
+        // runs
+        // its body once - see injectCustomParrotSounds.
         MOD.events().preLevelTick().register(Predator::injectCustomParrotSounds);
     }
 
     // Marine Spawns and Ash placement in nuked zones
     public static void injectCustomParrotSounds(Level level) {
-        if (level.isClientSide) {
+        if (level.isClientSide || parrotSoundsInjected) {
             return;
         }
 
-        var sounds = ParrotSoundMapAccessor.getSoundMap();
-
-        /*
-         * TODO: Use Yautja sound when added
-         */
-        sounds.put(PredatorEntityTypes.YAUTJA.get(), SoundEvents.ALLAY_AMBIENT_WITH_ITEM);
+        // Oct 14 - a parrot near a yautja now imitates the yautja's CLICK (it was the allay's placeholder sound). The
+        // parrot plays it at its own pitch, so it reads as a parrot doing the click.
+        ParrotSoundMapAccessor.getSoundMap().put(PredatorEntityTypes.YAUTJA.get(), PredatorSoundEvents.YAUTJA_CLICK.get());
+        parrotSoundsInjected = true;
     }
+
+    /**
+     * The parrot map is vanilla's static table, filled once per game. ⚠ This used to run on EVERY level tick of every
+     * dimension - a map write 20 times a second per dimension, for ever.
+     */
+    private static boolean parrotSoundsInjected;
 }

@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "avp_predator:block/village_polished_slab"
+    },
+    "type=double": {
+      "model": "avp_predator:block/village_polished"
+    },
+    "type=top": {
+      "model": "avp_predator:block/village_polished_slab_top"
+    }
+  }
+}

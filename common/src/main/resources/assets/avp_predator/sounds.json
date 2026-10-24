@@ -549,5 +549,86 @@
       }
     ],
     "subtitle": "subtitles.caster.charge_loop"
+  },
+  "battleaxe.equip": {
+    "sounds": [
+      "avp_predator:battleaxe/equip"
+    ],
+    "subtitle": "subtitles.battleaxe.equip"
+  },
+  "battleaxe.putaway": {
+    "sounds": [
+      "avp_predator:battleaxe/putaway"
+    ],
+    "subtitle": "subtitles.battleaxe.putaway"
+  },
+  "battleaxe.strike_horizontal": {
+    "sounds": [
+      "avp_predator:battleaxe/strike1"
+    ],
+    "subtitle": "subtitles.battleaxe.strike_horizontal"
+  },
+  "battleaxe.strike_left": {
+    "sounds": [
+      "avp_predator:battleaxe/strike2"
+    ],
+    "subtitle": "subtitles.battleaxe.strike_left"
+  },
+  "battleaxe.strike_right": {
+    "sounds": [
+      "avp_predator:battleaxe/strike3"
+    ],
+    "subtitle": "subtitles.battleaxe.strike_right"
+  },
+  "battleaxe.slam_swing": {
+    "sounds": [
+      {
+        "name": "avp_predator:battleaxe/strike2",
+        "pitch": 0.9
+      }
+    ],
+    "subtitle": "subtitles.battleaxe.slam_swing"
+  },
+  "plasma_sword.equip": {
+    "sounds": [
+      "avp_predator:plasma_sword/equip"
+    ],
+    "subtitle": "subtitles.plasma_sword.equip"
+  },
+  "plasma_sword.putaway": {
+    "sounds": [
+      "avp_predator:plasma_sword/putaway"
+    ],
+    "subtitle": "subtitles.plasma_sword.putaway"
+  },
+  "plasma_sword.attack1": {
+    "sounds": [
+      "avp_predator:plasma_sword/attack1"
+    ],
+    "subtitle": "subtitles.plasma_sword.attack1"
+  },
+  "plasma_sword.attack2": {
+    "sounds": [
+      "avp_predator:plasma_sword/attack2"
+    ],
+    "subtitle": "subtitles.plasma_sword.attack2"
+  },
+  "freeze.freeze_solid": {
+    "sounds": [
+      {
+        "name": "avp_predator:freeze/freeze_solid",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.freeze.freeze_solid"
+  },
+  "freeze.frozen_break": {
+    "sounds": [
+      {
+        "name": "avp_predator:freeze/frozen_break",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.freeze.frozen_break"
   }
 }

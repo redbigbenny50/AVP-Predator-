@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "avp_predator:block/village_chiseled_weapon"
+    },
+    "facing=east": {
+      "model": "avp_predator:block/village_chiseled_weapon",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "avp_predator:block/village_chiseled_weapon",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "avp_predator:block/village_chiseled_weapon",
+      "y": 270
+    }
+  }
+}

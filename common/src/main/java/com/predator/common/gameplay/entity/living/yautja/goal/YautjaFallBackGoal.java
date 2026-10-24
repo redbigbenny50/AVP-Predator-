@@ -27,10 +27,20 @@ import java.util.EnumSet;
  */
 public class YautjaFallBackGoal extends Goal {
 
-    /** Horizontal push of the leap, blocks per tick. Tuned to land about 10-12 blocks out. */
-    public static double LEAP_POWER = 1.15D;
+    // 🚨 Oct 16 - THE LEAP IS NOW THE dodge.back DASH. [stated] "dodge backwards this is supposed to be the one that
+    // shoots the yautja backwards right now you have some kind of backwards jump thrown together instead it would be
+    // this animation going backwards for its duration probably at 80% speed." The old ballistic leap (one velocity
+    // impulse, LEAP_POWER 1.15 / LEAP_LIFT 0.42) is gone: the clip plays at 80% and the yautja is driven backwards
+    // between the clip's own push-off and landing frames, fastest at the start and easing to a stop. Same 10 blocks
+    // the landing probe checks, past the caster's 7-block cut-off.
 
-    public static double LEAP_LIFT = 0.42D;
+    /**
+     * Seconds into dodge.back AS AUTHORED where it pushes off: the crouch bottoms out at 0.08, the body rises by 0.17.
+     */
+    private static final float DASH_PUSH_OFF = 0.17F;
+
+    /** Seconds into dodge.back AS AUTHORED where it lands: the second crouch, at 0.708. */
+    private static final float DASH_LANDING = 0.708F;
 
     /** Only leap if the threat is this close — further than this and the ranged goals already work. */
     public static double TRIGGER_RANGE = 6.0D;
@@ -160,6 +170,11 @@ public class YautjaFallBackGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        // ⚠ Mid-dash it carries on whatever happens to the threat: stopping would leave the yautja frozen mid-clip.
+        if (isDashing()) {
+            return true;
+        }
+
         if (threat == null || !threat.isAlive() || yautja.tickCount >= holdUntil) {
             return false;
         }
@@ -217,8 +232,18 @@ public class YautjaFallBackGoal extends Goal {
             return;
         }
 
-        yautja.setDeltaMovement(bearing.x * LEAP_POWER, LEAP_LIFT, bearing.z * LEAP_POWER);
-        yautja.hasImpulse = true;
+        // The dash: the clip, and the bearing tick() drives it along. ⚠ Both navigators stopped, or a path it was
+        // following steers it straight back toward what it is leaving.
+        yautja.getNavigation().stop();
+
+        if (yautja instanceof com.blib.api.common.pathfinding.v1.navigator.PathNavigatorUser navigatorUser) {
+            navigatorUser.getPathNavigator().stop();
+        }
+
+        dashBearing = bearing;
+        dashStartTick = yautja.tickCount;
+        // Immune for the dash: [stated] Oct 16, the backward dash protects it like the sidestep and the roll.
+        yautja.startEvade(com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip.BACK, true);
         yautja.getLookControl().setLookAt(threat, 60.0F, 60.0F);
         yautja.level().playSound(null, yautja.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.HOSTILE, 0.7F, 0.7F);
         com.predator.common.gameplay.entity.living.yautja.YautjaSounds.longJump(yautja);
@@ -228,8 +253,20 @@ public class YautjaFallBackGoal extends Goal {
         yautja.setRangedHoldUntil(holdUntil);
     }
 
+    /**
+     * ⚠ Every tick, not every other. Vanilla ticks a running goal only on alternate ticks unless it asks
+     * (GoalSelector.tickRunningGoals, verified in the bytecode): the dash sets its speed each tick, and on the skipped
+     * ones friction alone would carry it, so it fell well short of its 10 blocks.
+     */
+    @Override
+    public boolean requiresUpdateEveryTick() {
+        return true;
+    }
+
     @Override
     public void tick() {
+        tickDash();
+
         if (threat != null) {
             // Facing the threat the whole way back.
             yautja.getLookControl().setLookAt(threat, 60.0F, 60.0F);
@@ -249,8 +286,59 @@ public class YautjaFallBackGoal extends Goal {
         }
     }
 
+    /** The direction of the dash in progress, or null when there is none. */
+    private @Nullable Vec3 dashBearing;
+
+    private int dashStartTick;
+
+    /**
+     * {@return whether the dash is still running, push-off to the end of the clip} The goal is never ended mid-dash.
+     */
+    private boolean isDashing() {
+        return dashBearing != null
+            && yautja.tickCount - dashStartTick < com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip.BACK.ticks();
+    }
+
+    /**
+     * Drives the dash. Between push-off and landing the speed falls in a straight line from twice the average to
+     * nothing, so the whole window covers exactly FALL_BACK_DISTANCE and the yautja arrives as the clip lands it. ⚠
+     * Horizontal only: it keeps whatever it is doing vertically, so it follows the ground and falls off a ledge the
+     * probe already judged safe. A wall simply stops it there.
+     */
+    private void tickDash() {
+        if (dashBearing == null) {
+            return;
+        }
+
+        var clip = com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip.BACK;
+        var elapsed = yautja.tickCount - dashStartTick;
+        var pushOff = clip.tickAt(DASH_PUSH_OFF);
+        var landing = clip.tickAt(DASH_LANDING);
+        var window = Math.max(1, landing - pushOff);
+
+        if (elapsed >= clip.ticks()) {
+            dashBearing = null;
+            return;
+        }
+
+        if (elapsed < pushOff || elapsed >= landing) {
+            return;
+        }
+
+        var step = elapsed - pushOff;
+        // Linear ease-out: the speeds 2d/w * (1 - i/w) for i = 0..w-1 sum to d * (w+1)/w - a hair over d, on purpose,
+        // since ground friction takes a little off every tick.
+        var speed = 2.0D * FALL_BACK_DISTANCE / window * (1.0D - (double) step / window);
+        var motion = yautja.getDeltaMovement();
+
+        yautja.setDeltaMovement(dashBearing.x * speed, motion.y, dashBearing.z * speed);
+        yautja.hasImpulse = true;
+    }
+
     @Override
     public void stop() {
+        dashBearing = null;
+
         if (backpedalling) {
             // Clear the strafe input it was feeding, or the yautja keeps drifting backwards after the goal ends.
             yautja.getMoveControl().strafe(0.0F, 0.0F);

@@ -51,6 +51,9 @@ public class YautjaBattleaxeSlamGoal extends Goal {
 
     private int impactTick = -1;
 
+    /** Tick the slam's downswing sound plays on, or -1. See BattleaxeSounds - its peak lands with the impact. */
+    private int swingSoundTick = -1;
+
     public YautjaBattleaxeSlamGoal(Yautja yautja) {
         this.yautja = yautja;
     }
@@ -76,6 +79,12 @@ public class YautjaBattleaxeSlamGoal extends Goal {
             return;
         }
 
+        // Oct 10 - [stated] the swing sound goes "at the height of the axe going into the fall".
+        if (swingSoundTick >= 0 && yautja.tickCount >= swingSoundTick) {
+            swingSoundTick = -1;
+            com.predator.common.gameplay.item.battleaxe.BattleaxeSounds.playSlamSwing(yautja);
+        }
+
         // Land a slam already in progress, even if the target died mid-swing — the axe is already coming down.
         if (impactTick >= 0) {
             if (yautja.tickCount >= impactTick) {
@@ -98,6 +107,7 @@ public class YautjaBattleaxeSlamGoal extends Goal {
 
         yautja.playAttackAnimation(YautjaAttackAnimation.BATTLEAXE_SLAM);
         impactTick = yautja.tickCount + impactTicks();
+        swingSoundTick = yautja.tickCount + com.predator.common.gameplay.item.battleaxe.BattleaxeSounds.yautjaSlamSwingTick(impactTicks());
 
         // [stated] the yell is "when it slams the battle axe" — as the axe goes up, so it peaks as it comes down.
         com.predator.common.gameplay.entity.living.yautja.YautjaSounds.heavyAttack(yautja);

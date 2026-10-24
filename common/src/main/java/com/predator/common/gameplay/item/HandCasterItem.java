@@ -68,8 +68,25 @@ public class HandCasterItem extends Item {
     /** How far the reticle is followed for aiming. */
     private static final double AIM_RANGE = 64.0D;
 
-    /** Players charging right now: player -> game time the charge began. Server only. */
-    private static final Map<UUID, Long> CHARGING = new HashMap<>();
+    /**
+     * Players charging right now: player -> when the charge began and WHICH caster is charging. Server only.
+     * <p>
+     * ⚠ Oct 14 - the caster is remembered by identity. Before, the charge belonged only to the player, so swapping
+     * straight from one hand caster to another mid-charge carried the charge across and the second one fired at full
+     * power without ever charging. Now any change of caster drops the charge, exactly like putting it away.
+     */
+    private static final Map<UUID, Charge> CHARGING = new HashMap<>();
+
+    /**
+     * One charge in progress.
+     *
+     * @param startTick game time the button went down
+     * @param caster    the hand caster stack being charged - the same object while it stays in the hand
+     */
+    private record Charge(
+        long startTick,
+        ItemStack caster
+    ) {}
 
     public HandCasterItem(Properties properties) {
         super(properties.stacksTo(1).fireResistant());
@@ -98,7 +115,7 @@ public class HandCasterItem extends Item {
             return;
         }
 
-        CHARGING.put(player.getUUID(), level.getGameTime());
+        CHARGING.put(player.getUUID(), new Charge(level.getGameTime(), stack));
         broadcastCharge(player, true);
         // [stated] "the charge then the hold loop" — two separate sounds, like the plasma bow's draw and hold. This is
         // the charge (2 s, the length of a full charge); the hold loop starts on each client once it has finished
@@ -125,16 +142,20 @@ public class HandCasterItem extends Item {
     }
 
     private static void releaseAt(Player player, @org.jetbrains.annotations.Nullable Vec3 tip) {
-        var start = CHARGING.remove(player.getUUID());
+        var charge = CHARGING.remove(player.getUUID());
 
         broadcastCharge(player, false);
         var stack = player.getMainHandItem();
 
-        if (start == null || !(stack.getItem() instanceof HandCasterItem) || !(player.level() instanceof ServerLevel level)) {
+        // ⚠ Oct 14 - only the caster that was charged may fire.
+        if (
+            charge == null || charge.caster() != stack || !(stack.getItem() instanceof HandCasterItem)
+                || !(player.level() instanceof ServerLevel level)
+        ) {
             return;
         }
 
-        var held = level.getGameTime() - start;
+        var held = level.getGameTime() - charge.startTick();
 
         if (held < MIN_CHARGE_TICKS) {
             return;
@@ -336,21 +357,45 @@ public class HandCasterItem extends Item {
             return;
         }
 
+        // Oct 10 - ⚠⚠ "selected" IS NOT "IN THE MAIN HAND". Inventory.tick (1.21.1 bytecode) passes selected = (index
+        // == hotbar
+        // slot) for EVERY compartment - main inventory, armour AND offhand - so with hotbar slot 0 chosen, the OFFHAND
+        // item and the boots are also told they are selected. Identity against the main hand is the real test.
+        selected = selected && player.getMainHandItem() == stack;
+
         playSelectionSound(stack, level, player, selected);
 
-        var start = CHARGING.get(player.getUUID());
+        var charge = CHARGING.get(player.getUUID());
 
-        if (start == null) {
+        if (charge == null) {
             return;
         }
 
-        if (!selected || !player.isAlive()) {
+        // 🚨 Oct 10 - WAS "if (!selected) cancel". CHARGING is keyed by PLAYER, and EVERY hand caster the player
+        // carries
+        // runs this - so a second caster sitting unselected in the inventory cancelled the held one's charge on every
+        // tick, and a player carrying two could never fire.
+        // Oct 14 - tightened: the charge is dropped as soon as the CHARGING caster is no longer the one in the main
+        // hand
+        // (put away, dropped, or swapped for another caster). Any caster's tick may notice; each only compares.
+        if (player.getMainHandItem() != charge.caster()) {
             cancel(player);
 
             return;
         }
 
-        var progress = Math.min(1.0F, (float) (level.getGameTime() - start) / CHARGE_TICKS);
+        // Only the charging caster itself goes on to draw the sparks.
+        if (!selected) {
+            return;
+        }
+
+        if (!player.isAlive()) {
+            cancel(player);
+
+            return;
+        }
+
+        var progress = Math.min(1.0F, (float) (level.getGameTime() - charge.startTick()) / CHARGE_TICKS);
 
         sendChargeSparksToOthers(serverLevel, player, muzzlePosition(player), progress);
     }

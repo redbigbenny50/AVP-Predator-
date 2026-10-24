@@ -123,7 +123,16 @@ public class BattleaxeItem extends AxeItem {
     ) {
         super.inventoryTick(stack, level, entity, slot, selected);
 
-        if (!(level instanceof ServerLevel serverLevel) || !(entity instanceof Player player) || !selected) {
+        if (!(level instanceof ServerLevel serverLevel) || !(entity instanceof Player player)) {
+            return;
+        }
+
+        // Oct 10 - see the note in PlasmaSwordItem.inventoryTick: the hotbar index is also handed to the offhand.
+        selected = selected && player.getMainHandItem() == stack;
+
+        playSelectionSound(stack, player, selected);
+
+        if (!selected) {
             return;
         }
 
@@ -137,6 +146,12 @@ public class BattleaxeItem extends AxeItem {
         player.fallDistance = 0.0F;
 
         var airborne = player.tickCount - startedAt;
+
+        // [stated] the slam's swing sound goes "at the height of the axe going into the fall" - timed so its peak
+        // lands with the slam. See BattleaxeSounds for the numbers. Played once: airborne passes each value once.
+        if (airborne == BattleaxeSounds.playerSlamSwingTick() && !player.onGround()) {
+            BattleaxeSounds.playSlamSwing(player);
+        }
 
         // ⚠ Give it a couple of ticks to leave the ground, or the tick it launched would count as a landing.
         if (airborne >= MIN_AIRBORNE_TICKS && player.onGround()) {
@@ -178,6 +193,11 @@ public class BattleaxeItem extends AxeItem {
     ) {
         var hit = super.hurtEnemy(stack, target, attacker);
 
+        // Oct 10 - one of his three strikes on every connecting swing, under the crit below. See BattleaxeSounds.
+        if (attacker instanceof Player && !attacker.level().isClientSide) {
+            BattleaxeSounds.playPlayerStrike(attacker);
+        }
+
         if (attacker instanceof Player player && !player.level().isClientSide && !(player.fallDistance > 0.0F && !player.onGround())) {
             player.crit(target);
             player.level()
@@ -194,6 +214,30 @@ public class BattleaxeItem extends AxeItem {
         }
 
         return hit;
+    }
+
+    /** ⚠ Stops an axe already in the hotbar announcing itself the moment a player logs in. */
+    private static final int SELECTION_SOUND_GRACE_TICKS = 10;
+
+    /**
+     * Oct 10 - his equip sound on taking the axe out, his put-away sound on switching off it. Fires on the CHANGE of
+     * selection, the same shape as the hand caster's deploy / retract.
+     * <p>
+     * ⚠ Writing the flag changes the stack's components; MixinItemInHandRenderer_MainHandKeep already keeps the
+     * battleaxe from re-equipping over its own state changes (the slam stamps do the same), so this causes no arm drop.
+     */
+    private static void playSelectionSound(ItemStack stack, Player player, boolean selected) {
+        var wasSelected = stack.getOrDefault(com.predator.common.registry.init.PredatorDataComponents.BATTLEAXE_WAS_SELECTED.get(), false);
+
+        if (selected == wasSelected) {
+            return;
+        }
+
+        stack.set(com.predator.common.registry.init.PredatorDataComponents.BATTLEAXE_WAS_SELECTED.get(), selected);
+
+        if (player.tickCount > SELECTION_SOUND_GRACE_TICKS) {
+            BattleaxeSounds.playEquip(player, selected);
+        }
     }
 
     /** Upward launch of the leap. 1.37 blocks high, 12 ticks in the air — matched to the yautja's slam clip. */

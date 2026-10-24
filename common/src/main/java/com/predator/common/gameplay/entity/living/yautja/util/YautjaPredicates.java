@@ -69,6 +69,14 @@ public class YautjaPredicates {
                             || (yautja.getLastAttacker() != null && yautja.getLastAttacker().is(potentialTarget));
                     }
 
+                    // Oct 17 - [stated] "the predator will attack chained and captured queens this would go against its
+                    // honor code. if a queen is bound its not a worthy hunt." He set bound as ALL FOUR chains, and a
+                    // bound queen that strikes the yautja may be fought, like a facehugger. "Queen" means empress and
+                    // harbinger too - see isFullyBound.
+                    if (isFullyBound(potentialTarget)) {
+                        yield yautja.getLastAttacker() != null && yautja.getLastAttacker().is(potentialTarget);
+                    }
+
                     // Every adult caste — worthy prey on sight.
                     yield true;
                 }
@@ -85,6 +93,47 @@ public class YautjaPredicates {
                 yield yautja.getLastAttacker() != null && yautja.getLastAttacker().is(potentialTarget);
             }
         };
+    }
+
+    /** Per creature type: [getBindManager, isFullyBound], or an empty array for a type that cannot be chained. */
+    private static final java.util.Map<Class<?>, java.lang.reflect.Method[]> BIND_LOOKUP = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static final java.lang.reflect.Method[] NOT_BINDABLE = new java.lang.reflect.Method[0];
+
+    /**
+     * {@return whether this avp_alien creature is held by all four capture chains}
+     * <p>
+     * Calls avp_alien's own {@code getBindManager().isFullyBound()} - the exact check avp_alien uses to call a queen
+     * captured (AlienPredicates, OvipositorManager) - so the two mods cannot disagree. Verified in the 0.2.8 MDK.
+     * <p>
+     * Oct 17 - [stated] "when i say queen i mean empress too and harbinger". In avp_alien 0.2.8 only the QUEEN can be
+     * chained (CaptureChainItem binds a Queen and nothing else), so today only she is ever "bound". This asks ANY
+     * creature that has a bind manager rather than the Queen class, so an empress or harbinger made chainable later is
+     * respected with no change here.
+     * <p>
+     * ⚠ Read by name, looked up once per creature type - predator needs no avp_alien to build or run. ⚠ Any failure
+     * reads as "not bound": a missing or renamed method must never make a yautja spare everything.
+     */
+    private static boolean isFullyBound(LivingEntity entity) {
+        var methods = BIND_LOOKUP.computeIfAbsent(entity.getClass(), type -> {
+            try {
+                var getBindManager = type.getMethod("getBindManager");
+                return new java.lang.reflect.Method[] { getBindManager, getBindManager.getReturnType().getMethod("isFullyBound") };
+            } catch (ReflectiveOperationException | LinkageError ignored) {
+                return NOT_BINDABLE;
+            }
+        });
+
+        if (methods.length == 0) {
+            return false;
+        }
+
+        try {
+            var manager = methods[0].invoke(entity);
+            return manager != null && Boolean.TRUE.equals(methods[1].invoke(manager));
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            return false;
+        }
     }
 
     private YautjaPredicates() {

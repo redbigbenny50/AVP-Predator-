@@ -67,9 +67,7 @@ public abstract class MixinAzEntityRenderer_VisionClassification {
 
         if (materialId != 0) {
             // Flush first: vertices already queued belong to whatever was current before this entity.
-            if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
-                bufferSource.endBatch();
-            }
+            com.predator.client.vision.VisionBatchFlush.flush(buffer);
 
             BLibPostEffectFramework.pushMaterialId(materialId);
             frame[2] = 1;
@@ -92,9 +90,7 @@ public abstract class MixinAzEntityRenderer_VisionClassification {
             return;
         }
 
-        if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
-            bufferSource.endBatch();
-        }
+        com.predator.client.vision.VisionBatchFlush.flush(buffer);
 
         if (pushLaneA) {
             BLibPostEffectFramework.pushBackgroundEntity();
@@ -130,9 +126,7 @@ public abstract class MixinAzEntityRenderer_VisionClassification {
         }
 
         // One flush covers all three: this entity's vertices must be drawn under its own uniforms before they change.
-        if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
-            bufferSource.endBatch();
-        }
+        com.predator.client.vision.VisionBatchFlush.flush(buffer);
 
         if (frame[1] == 1) {
             BLibPostEffectFramework.popBackgroundEntityB();

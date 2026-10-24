@@ -235,12 +235,24 @@ public class YautjaGrenadeProjectile extends ThrowableItemProjectile {
                 firePatch(level, BlockPos.containing(at));
             }
             case FREEZE -> {
-                level.explode(this, at.x, at.y, at.z, HALF_POWER, Level.ExplosionInteraction.TNT);
+                // [stated] Oct 19 - the blast still hurts, but as COLD: freeze damage credited to the thrower, not
+                // explosion damage. Cold never breaks a mob out of the ice, so a mob already frozen stays frozen,
+                // and the freeze below is not undone by the blast that delivered it.
+                var coldBlast = new net.minecraft.world.damagesource.DamageSource(
+                    level.registryAccess()
+                        .registryOrThrow(net.minecraft.core.registries.Registries.DAMAGE_TYPE)
+                        .getHolderOrThrow(net.minecraft.world.damagesource.DamageTypes.FREEZE),
+                    this,
+                    getOwner()
+                );
+                level.explode(this, coldBlast, null, at.x, at.y, at.z, HALF_POWER, false, Level.ExplosionInteraction.TNT);
                 FreezePatches.freeze(level, BlockPos.containing(at), PATCH_RADIUS, ICE_TICKS);
 
-                // The blast itself: whatever it left at 10% or less, and any passive mob caught in it, freezes solid.
+                // [stated] Oct 19 - "have it instantly freeze anything regardless of hp amount" ("the grenades from
+                // predator badlands instantly froze things"): everything caught that can be frozen solid is, at once,
+                // at any health - with avp_human's freeze sound. The lingering ice patch keeps the ordinary 10% rule.
                 for (var caught : level.getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(PATCH_RADIUS + 1.0))) {
-                    com.predator.common.gameplay.freeze.FreezeBridge.tryFreezeSolid(caught);
+                    com.predator.common.gameplay.freeze.FreezeBridge.forceFreezeSolid(caught);
                 }
             }
             case IRRADIATED -> {

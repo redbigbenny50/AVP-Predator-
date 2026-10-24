@@ -1,3 +1,16 @@
 {
-  "values": []
+  "values": [
+    "avp_predator:village_red_stone_wall",
+    "avp_predator:village_red_brick_wall",
+    "avp_predator:village_red_small_brick_wall",
+    "avp_predator:village_red_rough_brick_wall",
+    "avp_predator:village_red_tile_wall",
+    "avp_predator:village_red_stone_polished_wall",
+    "avp_predator:village_stone_wall",
+    "avp_predator:village_polished_wall",
+    "avp_predator:village_brick_wall",
+    "avp_predator:village_small_brick_wall",
+    "avp_predator:village_rough_brick_wall",
+    "avp_predator:village_tile_wall"
+  ]
 }

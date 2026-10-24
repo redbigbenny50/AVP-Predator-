@@ -115,15 +115,27 @@ public final class YautjaAlienTruce {
     }
 
     /**
-     * {@return whether {@code entity} is an avp_human marine} By registry id, so avp_human does not have to be
-     * installed.
+     * {@return whether {@code entity} is on the marines' side of the truce} By registry id, so avp_human does not have
+     * to be installed.
+     * <p>
+     * Oct 13 - avp_human split its soldiers out of the marine. [stated] "its actually ok if the yautja truce doesnt
+     * apply to the WY units": the USCM soldiers (marine, tactical marine) and the marine dog take part; the Weyland-
+     * Yutani units (wy_*) do not. This used to match ids starting with "marine", which left the tactical marine out.
+     * Mirrors avp_human's own MarineAlienTruce.
+     * </p>
      *
      * @param entity the entity
      */
     public static boolean isMarine(Entity entity) {
         var key = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
 
-        return "avp_human".equals(key.getNamespace()) && key.getPath().startsWith("marine");
+        if (!"avp_human".equals(key.getNamespace())) {
+            return false;
+        }
+
+        var path = key.getPath();
+
+        return "marine".equals(path) || "tactical_marine".equals(path) || "marine_dog".equals(path);
     }
 
     /**

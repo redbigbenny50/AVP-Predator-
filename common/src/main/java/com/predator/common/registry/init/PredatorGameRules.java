@@ -80,6 +80,18 @@ public final class PredatorGameRules {
      * same key — see {@link #sharedBoolean}. avp_alien does exactly the same, so the order the mods load in does not
      * matter.
      */
+    /**
+     * Oct 16 - [stated] "a gamerule to disable the hunting mechanic entirely. Off by default." When on, no Hunter's
+     * Moon begins for anyone and every hunt already running ends on the next tick (HuntDirector.tickLevel). Honor keeps
+     * accruing, so turning it back off resumes hunts at the next full moon.
+     */
+    public static final GameRules.Key<GameRules.BooleanValue> DISABLE_YAUTJA_HUNTS = MixinGameRulesAccessor
+        .blib$register(
+            "disableYautjaHunts",
+            GameRules.Category.MOBS,
+            MixinGameRulesBooleanValueAccessor.blib$create(false)
+        );
+
     public static final GameRules.Key<GameRules.BooleanValue> GUN_BALANCING = sharedBoolean("gunBalancing", GameRules.Category.MOBS, true);
 
     /**
@@ -111,6 +123,11 @@ public final class PredatorGameRules {
 
             return MixinGameRulesAccessor.blib$register(id, category, MixinGameRulesBooleanValueAccessor.blib$create(defaultValue));
         }
+    }
+
+    /** {@return whether the hunts are switched off by the {@code disableYautjaHunts} game rule} */
+    public static boolean areYautjaHuntsDisabled(Level level) {
+        return level.getGameRules().getBoolean(DISABLE_YAUTJA_HUNTS);
     }
 
     public static boolean isYautjaDebugInventoryEnabled(Level level) {

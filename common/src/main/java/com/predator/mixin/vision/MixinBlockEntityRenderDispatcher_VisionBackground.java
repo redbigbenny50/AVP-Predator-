@@ -58,9 +58,7 @@ public abstract class MixinBlockEntityRenderDispatcher_VisionBackground {
             return;
         }
 
-        if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
-            bufferSource.endBatch();
-        }
+        com.predator.client.vision.VisionBatchFlush.flush(buffer);
 
         if (pushLaneA) {
             BLibPostEffectFramework.pushBackgroundEntity();
@@ -95,9 +93,7 @@ public abstract class MixinBlockEntityRenderDispatcher_VisionBackground {
             return;
         }
 
-        if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
-            bufferSource.endBatch();
-        }
+        com.predator.client.vision.VisionBatchFlush.flush(buffer);
 
         if (poppedLaneB) {
             BLibPostEffectFramework.popBackgroundEntityB();

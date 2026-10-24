@@ -56,6 +56,26 @@ public class EnUsSoundEventProvider {
 
         addSound(builder, PredatorSoundEvents.CORPSE_OPEN, "Corpse squelches open");
 
+        addSound(builder, PredatorSoundEvents.BATTLEAXE_EQUIP, "Battleaxe drawn");
+
+        addSound(builder, PredatorSoundEvents.BATTLEAXE_PUTAWAY, "Battleaxe stowed");
+
+        addSound(builder, PredatorSoundEvents.BATTLEAXE_STRIKE_HORIZONTAL, "Battleaxe swings");
+
+        addSound(builder, PredatorSoundEvents.BATTLEAXE_STRIKE_LEFT, "Battleaxe swings");
+
+        addSound(builder, PredatorSoundEvents.BATTLEAXE_STRIKE_RIGHT, "Battleaxe swings");
+
+        addSound(builder, PredatorSoundEvents.BATTLEAXE_SLAM_SWING, "Battleaxe comes down");
+
+        addSound(builder, PredatorSoundEvents.PLASMA_SWORD_EQUIP, "Plasma sword ignites");
+
+        addSound(builder, PredatorSoundEvents.PLASMA_SWORD_PUTAWAY, "Plasma sword shuts off");
+
+        addSound(builder, PredatorSoundEvents.PLASMA_SWORD_ATTACK_1, "Plasma sword swings");
+
+        addSound(builder, PredatorSoundEvents.PLASMA_SWORD_ATTACK_2, "Plasma sword swings");
+
         addSound(builder, PredatorSoundEvents.CORPSE_HIT, "Corpse is cut");
 
         addSound(builder, PredatorSoundEvents.CORPSE_BREAK, "Corpse is torn apart");
@@ -67,6 +87,8 @@ public class EnUsSoundEventProvider {
         addSound(builder, PredatorSoundEvents.HAND_CASTER_FIRE, "Hand caster fires");
 
         addSound(builder, PredatorSoundEvents.HAND_CASTER_RELOAD, "Hand caster reloads");
+        addSound(builder, PredatorSoundEvents.STAND_IN_FREEZE_SOLID, "Something freezes solid");
+        addSound(builder, PredatorSoundEvents.STAND_IN_FROZEN_BREAK, "Ice shatters");
     };
 
     private static void addSound(

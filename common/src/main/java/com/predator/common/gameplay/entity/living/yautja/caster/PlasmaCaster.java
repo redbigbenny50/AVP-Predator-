@@ -174,8 +174,24 @@ public final class PlasmaCaster {
      */
     public static final float BOLT_DAMAGE = 20.0F;
 
-    /** Blocks per tick. Fast enough to read as a bolt rather than a thrown object, slow enough to see coming. */
-    public static final double BOLT_SPEED = 1.8;
+    /**
+     * Blocks per tick: 3.0 = 60 blocks a second, the speed of a fully drawn vanilla arrow.
+     * <p>
+     * Oct 16 - WAS 1.8 (36 blocks a second), my own pick at the first build ("slow enough to see coming"), never one of
+     * his rulings. [stated] tester: the caster is "too slow moving and easy to dodge". At 32 blocks a 1.8 bolt took 18
+     * ticks - almost a second to step aside; at 3.0 it takes 11. Shared with the hand caster, which fires "the same
+     * bolt". The yautja's lead aim reads this value, so it still aims ahead of moving prey correctly.
+     * <p>
+     * ⚠ Faster is safe for hits: the bolt is a ThrowableProjectile, whose tick sweeps its WHOLE move for a hit
+     * (ProjectileUtil.getHitResultOnMoveVector), so it cannot skip past a target between ticks.
+     */
+    public static final double BOLT_SPEED = 3.0;
+
+    /**
+     * Blocks between trail puffs along the bolt's path. 1.8 is the spacing the trail had at the old speed, when it left
+     * one puff per tick; the faster bolt fills each tick's path at the same spacing so the trail stays solid.
+     */
+    private static final double TRAIL_SPACING = 1.8D;
 
     /** Ticks. At the speed above this covers well past {@link #MAX_RANGE}, so nothing expires mid-flight in range. */
     public static final int BOLT_LIFETIME_TICKS = 60;
@@ -426,6 +442,20 @@ public final class PlasmaCaster {
      * casters are shooting at once.
      * </p>
      */
+    /**
+     * Lays the trail along one tick of flight, from {@code from} to {@code to}, one puff every {@link #TRAIL_SPACING}
+     * blocks and always one at {@code to}, so a fast bolt leaves a solid line rather than dots.
+     */
+    public static void spawnBoltTrailAlong(ServerLevel level, Vec3 from, Vec3 to) {
+        var step = to.subtract(from);
+        var length = step.length();
+        var puffs = Math.max(1, (int) Math.ceil(length / TRAIL_SPACING));
+
+        for (var i = 1; i <= puffs; i++) {
+            spawnBoltTrail(level, from.add(step.scale((double) i / puffs)));
+        }
+    }
+
     public static void spawnBoltTrail(ServerLevel level, Vec3 position) {
         // ⚠ His report: the trail was reading BIGGER than the bolt and too white. The bolt is a 2-block model at
         // 0.363 scale — about 0.73 blocks — so a 0.8-scale particle really was outsizing it. The white dust and

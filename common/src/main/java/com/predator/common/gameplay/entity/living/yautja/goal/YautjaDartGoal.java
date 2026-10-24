@@ -4,7 +4,6 @@ import com.predator.common.gameplay.entity.living.yautja.Yautja;
 import com.predator.common.gameplay.entity.living.yautja.ai.YautjaSensors;
 import com.predator.common.gameplay.entity.living.yautja.util.YautjaPredicates;
 import com.predator.common.gameplay.entity.projectile.VeritaniumDartProjectile;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.ai.goal.Goal;
 
@@ -117,10 +116,12 @@ public class YautjaDartGoal extends Goal {
             .playSound(
                 null,
                 yautja.blockPosition(),
-                SoundEvents.ARROW_SHOOT,
+                // Oct 14 - was vanilla's ARROW_SHOOT; the dart leaves the same wrist bracer as the player's, so it now
+                // uses the gauntlet dart sound (GauntletLauncher's volume and pitch).
+                com.predator.common.registry.init.PredatorSoundEvents.GAUNTLET_DART.get(),
                 SoundSource.HOSTILE,
-                1.0F,
-                1.4F
+                0.7F,
+                1.6F
             );
     }
 }

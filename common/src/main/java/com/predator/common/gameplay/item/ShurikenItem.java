@@ -37,6 +37,12 @@ public class ShurikenItem extends Item {
             return;
         }
 
+        // Oct 10 - ⚠⚠ "selected" IS NOT "IN THE MAIN HAND". Inventory.tick (1.21.1 bytecode) passes selected = (index
+        // == hotbar
+        // slot) for EVERY compartment - main inventory, armour AND offhand - so with hotbar slot 0 chosen, the OFFHAND
+        // item and the boots are also told they are selected. Identity against the main hand is the real test.
+        selected = selected && player.getMainHandItem() == stack;
+
         var wasSelected = stack.getOrDefault(PredatorDataComponents.SHURIKEN_WAS_SELECTED.get(), false);
 
         if (selected == wasSelected) {

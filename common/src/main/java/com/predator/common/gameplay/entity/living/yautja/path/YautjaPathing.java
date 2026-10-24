@@ -4,6 +4,7 @@ import com.blib.api.common.pathfinding.v1.cache.TerrainCacheRegistry;
 import com.blib.api.common.pathfinding.v1.evaluator.PathBlockBreakPolicy;
 import com.blib.api.common.pathfinding.v1.evaluator.PathBlockBreakingConfig;
 import com.blib.api.common.pathfinding.v1.evaluator.PathCrawlConfig;
+import com.blib.api.common.pathfinding.v1.evaluator.PathLeapConfig;
 import com.blib.api.common.pathfinding.v1.evaluator.PathWaterConfig;
 import com.blib.api.common.pathfinding.v1.evaluator.TerrainEvaluatorConfig;
 import com.blib.api.common.pathfinding.v1.feature.PathfindingFeature;
@@ -262,9 +263,32 @@ public final class YautjaPathing {
         return build(level, evaluator, followRange);
     }
 
+    /**
+     * The yautja's leap, planned by the pathfinder: 4 blocks of gap from a standstill, 7 with a straight run-up - the
+     * same two figures {@link YautjaJump} has always used.
+     * <p>
+     * [stated] Oct 23 - "let it still stalk around water but allow the jumping and have old jumping as a fall back".
+     * Until now a yautja only leapt as a REACTION ({@link YautjaJump}): the pathfinder had no leap, so a gap with no
+     * way round or down - a chasm, a moat round a ledge - was simply unreachable, and the route never even led to the
+     * edge. With the leap planned, a route can go ACROSS a gap. Both navigators get it; nothing else about them
+     * changes:
+     * </p>
+     * <ul>
+     * <li>BLib plans a leap only where there is no walkable ground right ahead, and adds a cost to every leap, so a
+     * walking route is still preferred whenever one exists;</li>
+     * <li>the stalk navigator keeps its 8x water cost, so it still goes ROUND water rather than through it - a leap
+     * over water costs the same as any other leap, so a stalking yautja can clear a stream instead of swimming it,
+     * which is the rule {@link YautjaJump} was written to: "both should clear a stream rather than swim it";</li>
+     * <li>{@link YautjaJump} stays as the fallback for an edge the route did not plan a leap at, and stands aside on
+     * a step the pathfinder has planned as a leap, so the two never fire at the same edge.</li>
+     * </ul>
+     */
+    private static final PathLeapConfig LEAP = PathLeapConfig.of(4, 7);
+
     private static TerrainEvaluatorConfig.Builder baseEvaluator() {
         return TerrainEvaluatorConfig.builder()
             .withEntitySize(ENTITY_WIDTH, ENTITY_HEIGHT)
+            .withLeapConfig(LEAP)
             // No crawling: nothing in the moveset ducks through a one-block gap, and the crawl clip is unbuilt.
             // ⚠ A yautja is 2.48 blocks tall, so a 2-block gap is impassable standing. Crawling lets it follow
             // prey through vents and crawlspaces instead of routing the long way round. The config's cost

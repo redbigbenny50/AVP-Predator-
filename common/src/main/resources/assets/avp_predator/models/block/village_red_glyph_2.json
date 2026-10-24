@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "avp_predator:block/village_glyph_05",
+    "north": "avp_predator:block/village_glyph_05",
+    "east": "avp_predator:block/village_glyph_06",
+    "south": "avp_predator:block/village_glyph_07",
+    "west": "avp_predator:block/village_glyph_08",
+    "up": "avp_predator:block/village_red_stone_polished",
+    "down": "avp_predator:block/village_red_stone_polished"
+  }
+}

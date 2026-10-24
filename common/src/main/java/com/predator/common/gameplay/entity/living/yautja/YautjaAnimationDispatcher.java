@@ -304,6 +304,36 @@ public class YautjaAnimationDispatcher {
     }
 
     /**
+     * Oct 16: one play command per evade clip, built exactly like {@link #DODGE} (replay, play once, on the full-body
+     * track) with the clip's own speed. ⚠ replay, so two sidesteps in a row both play.
+     */
+    private static final java.util.Map<com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip, AzCommand<Yautja>> EVADES =
+        buildEvades();
+
+    private static java.util.Map<com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip, AzCommand<Yautja>> buildEvades() {
+        var map = new java.util.EnumMap<com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip, AzCommand<Yautja>>(
+            com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip.class
+        );
+
+        for (var clip : com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip.values()) {
+            map.put(
+                clip,
+                AzCommand.<Yautja>replay()
+                    .play(AzTarget.track(YautjaAnimationRefs.FULL_BODY_CONTROLLER_NAME), clip.clipName(), AzPlayBehaviors.PLAY_ONCE)
+                    .setSpeed(AzTarget.track(YautjaAnimationRefs.FULL_BODY_CONTROLLER_NAME), clip.speed())
+                    .build()
+            );
+        }
+
+        return map;
+    }
+
+    /** Plays one of the evade clips. Client side, from Yautja.dispatchDodgeAnimation. */
+    public void evade(com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip clip) {
+        dispatch(EVADES.get(clip));
+    }
+
+    /**
      * ⚠ The spear deploy and stow ride the ATTACK track, not the body track. The yautja keeps walking, climbing or
      * standing while it telescopes the weapon out — same reason the caster has its own track.
      */

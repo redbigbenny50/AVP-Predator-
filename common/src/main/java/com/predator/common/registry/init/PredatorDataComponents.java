@@ -95,6 +95,12 @@ public class PredatorDataComponents {
         builder -> builder.persistent(com.mojang.serialization.Codec.BOOL)
     );
 
+    /** Whether this battleaxe was the selected item last tick — the equip / put-away sounds fire on the CHANGE. */
+    public static final BLibHolder<DataComponentType<Boolean>> BATTLEAXE_WAS_SELECTED = create(
+        "battleaxe_was_selected",
+        builder -> builder.persistent(com.mojang.serialization.Codec.BOOL)
+    );
+
     /** Whether this disc was the selected item last tick — the equip sound fires on the CHANGE, not while held. */
     public static final BLibHolder<DataComponentType<Boolean>> SMART_DISC_WAS_SELECTED = create(
         "smart_disc_was_selected",

@@ -119,6 +119,11 @@ public final class YautjaCombat {
      * (see {@link YautjaMovement#CHASE_SPEED_MODIFIER}), pathing to where prey currently is means arriving where it
      * used to be, every tick, forever. The xenomorphs lead their targets for the same reason.
      */
+    /** Whether the skirmish leg was reached last tick, so the next leg starts on the other side. Action-scoped. */
+    private static final com.just.ai.goap.StateKey<Boolean> LEG_REACHED = com.just.ai.goap.StateKey.sensed(
+        "yautja_skirmish_leg_reached"
+    );
+
     public static final Action<Yautja> MOVE_TO_TARGET = BLibAction.<Yautja>builder("YautjaMoveToTarget")
         .addMasks(ActionMasks.MOVE, ActionMasks.LOOK)
         .markInterruptible()
@@ -143,6 +148,32 @@ public final class YautjaCombat {
 
             // Prey up a tree: walk to the trunk, not at the sky. See groundBeneathElevatedPrey.
             var approach = groundBeneathElevatedPrey(yautja, prey);
+
+            // Oct 16 - [stated] "strafe or jump around when using range": with a ranged weapon in hand and the prey in
+            // sight, weave in side to side with the odd hop instead of walking straight at it. See YautjaSkirmish.
+            if (approach == null && YautjaSkirmish.shouldSkirmish(yautja, prey)) {
+                var legReached = context.getBlackboard(com.just.ai.goap.state.Blackboard.Scope.ACTION)
+                    .getOrDefault(LEG_REACHED, false);
+                var leg = YautjaSkirmish.legTarget(yautja, prey, legReached);
+                var weave = NeoMoveToPosAction.perform(
+                    context,
+                    leg,
+                    YautjaSkirmish.SKIRMISH_SPEED_MODIFIER,
+                    yautja.level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)
+                );
+
+                context.getBlackboard(com.just.ai.goap.state.Blackboard.Scope.ACTION)
+                    .set(LEG_REACHED, weave == NeoMoveToPosAction.Result.FINISHED);
+
+                if (weave != NeoMoveToPosAction.Result.NO_PATH) {
+                    YautjaSkirmish.maybeHop(yautja, prey);
+                    return Action.Signal.CONTINUE;
+                }
+
+                // ⚠ A leg it cannot reach (a tree, a drop) swaps sides and falls through to the straight chase for this
+                // tick, so a blocked weave never stalls the approach.
+                YautjaSkirmish.legBlocked(yautja);
+            }
 
             var result = NeoMoveToPosAction.perform(
                 context,
@@ -296,6 +327,18 @@ public final class YautjaCombat {
         yautja.playAttackAnimation(step);
         yautja.swing(InteractionHand.MAIN_HAND);
 
+        // Oct 10 - his battleaxe strike for this step of the combo, timed to peak on the impact frame. A no-op for any
+        // step that is not a battleaxe swing.
+        com.predator.common.gameplay.item.battleaxe.BattleaxeSounds.scheduleYautjaStrike(yautja, step);
+
+        // Oct 11 - and his plasma sword swing when the armed clip is swung with the sword.
+        if (
+            step == YautjaAttackAnimation.WEAPON
+                && yautja.getMainHandItem().getItem() instanceof com.predator.common.gameplay.item.PlasmaSwordItem
+        ) {
+            com.predator.common.gameplay.item.PlasmaSwordItem.scheduleYautjaSwing(yautja, step.impactTicks());
+        }
+
         // [stated] his attack sounds "when it swings its weapons" — and the yell for "a crit". A combo's finishing
         // blow (the step with knockback) is the yell; every other swing is a grunt, on most swings.
         if (step.knockback() > 0.0F) {
@@ -321,6 +364,9 @@ public final class YautjaCombat {
      * — a blow that has swung past its target must not land behind the yautja.
      */
     public static void tickPendingStrike(Yautja yautja) {
+        // ⚠ BEFORE the early return below: a swing sound plays whether or not the blow still has a target.
+        com.predator.common.gameplay.item.battleaxe.BattleaxeSounds.tickYautja(yautja);
+
         var prey = yautja.getPendingStrikePrey();
 
         if (prey == null || yautja.tickCount < yautja.getPendingStrikeTick()) {

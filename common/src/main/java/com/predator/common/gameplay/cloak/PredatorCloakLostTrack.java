@@ -44,8 +44,17 @@ public final class PredatorCloakLostTrack {
 
     private record Pursuit(
         BlockPos lastKnown,
-        int expiryTick
+        int expiryTick,
+        net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension,
+        int nextMoveTick
     ) {}
+
+    /**
+     * Oct 9 - PERFORMANCE. Every tick, every pursuer was sent a fresh {@code moveTo} - a full path search per mob per
+     * tick toward a spot that never moves. It is now re-issued at most once a second (an unreachable spot no longer
+     * costs a failed search every tick either).
+     */
+    private static final int REPATH_INTERVAL_TICKS = 20;
 
     /**
      * Called when the wearer's field re-engages. Every mob currently targeting them is handed the position they were
@@ -61,7 +70,7 @@ public final class PredatorCloakLostTrack {
         var searchBox = new AABB(wearer.blockPosition()).inflate(SEARCH_RADIUS);
 
         for (var mob : serverLevel.getEntitiesOfClass(Mob.class, searchBox, m -> m.getTarget() == wearer)) {
-            PURSUITS.put(mob.getUUID(), new Pursuit(lastKnown, expiry));
+            PURSUITS.put(mob.getUUID(), new Pursuit(lastKnown, expiry, serverLevel.dimension(), 0));
         }
     }
 
@@ -78,14 +87,24 @@ public final class PredatorCloakLostTrack {
 
         var now = level.getServer().getTickCount();
 
+        var dimension = level.dimension();
+
         PURSUITS.entrySet().removeIf(entry -> {
+            var pursuit = entry.getValue();
+
+            // Oct 9 - FIX: this runs once per DIMENSION, and the lookup below only finds mobs in this one - so every
+            // other dimension's pursuits were thrown away on the first level ticked. Each is now handled only by the
+            // level it belongs to.
+            if (!pursuit.dimension().equals(dimension)) {
+                return false;
+            }
+
             var mob = level.getEntity(entry.getKey());
 
             if (!(mob instanceof Mob pursuer) || pursuer.isRemoved()) {
                 return true;
             }
 
-            var pursuit = entry.getValue();
             var target = pursuer.getTarget();
 
             // The wearer became visible again, or the mob moved on by itself — let normal targeting resume.
@@ -106,13 +125,18 @@ public final class PredatorCloakLostTrack {
             }
 
             // Keep walking to the remembered spot rather than to the wearer's live position.
-            pursuer.getNavigation()
-                .moveTo(
-                    pursuit.lastKnown().getX() + 0.5,
-                    pursuit.lastKnown().getY(),
-                    pursuit.lastKnown().getZ() + 0.5,
-                    1.0
+            if (now >= pursuit.nextMoveTick()) {
+                pursuer.getNavigation()
+                    .moveTo(
+                        pursuit.lastKnown().getX() + 0.5,
+                        pursuit.lastKnown().getY(),
+                        pursuit.lastKnown().getZ() + 0.5,
+                        1.0
+                    );
+                entry.setValue(
+                    new Pursuit(pursuit.lastKnown(), pursuit.expiryTick(), pursuit.dimension(), now + REPATH_INTERVAL_TICKS)
                 );
+            }
 
             return false;
         });

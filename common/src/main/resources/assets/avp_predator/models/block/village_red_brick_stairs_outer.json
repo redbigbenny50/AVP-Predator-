@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/outer_stairs",
+  "textures": {
+    "bottom": "avp_predator:block/village_red_bricks",
+    "side": "avp_predator:block/village_red_bricks",
+    "top": "avp_predator:block/village_red_bricks"
+  }
+}

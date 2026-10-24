@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "avp_predator:block/village_polished",
+    "side": "avp_predator:block/village_border_swirl"
+  }
+}

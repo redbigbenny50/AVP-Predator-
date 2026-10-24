@@ -12,10 +12,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * the cross-entity batching note in {@link PredatorCloakRendering}.
  * <p>
  * The flush is anchored on the {@code "blockentities"} profiler section rather than a bytecode offset: it is the first
- * thing {@code renderLevel} does after its entity loop, it survives mapping differences between loaders, and the
- * string has been stable for many versions. If it ever stops matching, {@code endLevelFrame} notices held lanes at the
- * end of the frame and switches the cloak back to per-entity replay, logging once - nothing goes missing for more than
- * that one frame.
+ * thing {@code renderLevel} does after its entity loop, it survives mapping differences between loaders, and the string
+ * has been stable for many versions. If it ever stops matching, {@code endLevelFrame} notices held lanes at the end of
+ * the frame and switches the cloak back to per-entity replay, logging once - nothing goes missing for more than that
+ * one frame.
  */
 @Mixin(LevelRenderer.class)
 public abstract class MixinLevelRenderer_CloakBatch {

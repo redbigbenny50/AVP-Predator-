@@ -70,6 +70,14 @@ public final class YautjaHonorConfig {
 
     private static int[] killHonor = DEFAULT_KILL_HONOR.clone();
 
+    /**
+     * Oct 16 - [stated] "dieing to a hunter to make you lose 50 honor". The {@code loss_honor} entry of the hunters
+     * block. Never takes a player below {@link #unlockThreshold()} - see {@link #honorAfterLoss(int)}.
+     */
+    private static final int DEFAULT_LOSS_HONOR = 50;
+
+    private static int lossHonor = DEFAULT_LOSS_HONOR;
+
     /** {@return the honor at which ladder rung {@code rung} (0 = Youngblood .. 4 = Clan Leader) joins the roll} */
     public static int tierUnlock(int rung) {
         return tierUnlocks[rung];
@@ -80,6 +88,23 @@ public final class YautjaHonorConfig {
     }
 
     /** {@return the honor for killing a Hunter on ladder rung {@code rung}} */
+    /** {@return the honor a player loses when their own Hunter kills them} */
+    public static int lossHonor() {
+        return lossHonor;
+    }
+
+    /**
+     * {@return a player's honor after losing a hunt}
+     * <p>
+     * Oct 16 - [stated] "we also want honor to stay locked at a minimum of 150 so they never lose the ability to get
+     * hunted". The floor IS the unlock threshold (150 unless the config says otherwise), so a server that moves the
+     * threshold moves the floor with it. ⚠ A player somehow already below it (a hunt forced by the debug command) is
+     * never pushed below where they were, and never raised either.
+     */
+    public static int honorAfterLoss(int honor) {
+        return Math.max(honor - lossHonor, Math.min(honor, unlockThreshold));
+    }
+
     public static int killHonor(int rung) {
         return killHonor[rung];
     }
@@ -214,7 +239,15 @@ public final class YautjaHonorConfig {
             // added block — never throws the whole config back to defaults and loses a pack's advancement list.
             try {
                 if (json.has("hunters")) {
-                    readHunters(json.getAsJsonObject("hunters"));
+                    var hunters = json.getAsJsonObject("hunters");
+                    readHunters(hunters);
+
+                    // Oct 16: a file written before loss_honor existed gets the line added, nothing else touched.
+                    if (!hunters.has("loss_honor")) {
+                        hunters.addProperty("loss_honor", DEFAULT_LOSS_HONOR);
+                        Files.writeString(path, new GsonBuilder().setPrettyPrinting().create().toJson(json));
+                        Predator.LOGGER.info("Honor config: added loss_honor to {}", FILE_NAME);
+                    }
                 } else {
                     // A file written before the ladder existed: the block is added with the defaults, and nothing
                     // else in the file is touched.
@@ -226,6 +259,7 @@ public final class YautjaHonorConfig {
                 tierUnlocks = DEFAULT_TIER_UNLOCKS.clone();
                 ladderStep = DEFAULT_LADDER_STEP;
                 killHonor = DEFAULT_KILL_HONOR.clone();
+                lossHonor = DEFAULT_LOSS_HONOR;
                 Predator.LOGGER.warn("{}: could not read or add the hunters block; using its defaults.", FILE_NAME, exception);
             }
         } catch (Exception exception) {
@@ -235,6 +269,7 @@ public final class YautjaHonorConfig {
             tierUnlocks = DEFAULT_TIER_UNLOCKS.clone();
             ladderStep = DEFAULT_LADDER_STEP;
             killHonor = DEFAULT_KILL_HONOR.clone();
+            lossHonor = DEFAULT_LOSS_HONOR;
             Predator.LOGGER.warn("Could not read {}; using the built-in honor list.", FILE_NAME, exception);
         }
     }
@@ -276,6 +311,10 @@ public final class YautjaHonorConfig {
             }
         }
 
+        if (hunters.has("loss_honor")) {
+            lossHonor = Math.max(0, Math.min(1000, hunters.get("loss_honor").getAsInt()));
+        }
+
         if (hunters.has("kill_honor")) {
             var kills = hunters.getAsJsonObject("kill_honor");
 
@@ -294,8 +333,11 @@ public final class YautjaHonorConfig {
             "The Hunter tier ladder. The first hunt is always a Youngblood. A tier joins the roll at its tier_unlock_honor"
                 + " (entering at ladder_step percent, taken from the tier below), and every hunt won moves ladder_step"
                 + " percent up each rung, so the lower tiers fade out over time. kill_honor is paid for each Hunter killed."
+                + " loss_honor is taken when a player's own Hunter kills them, but never below unlock_threshold, so a"
+                + " player who has been hunted always stays huntable."
         );
         hunters.addProperty("ladder_step", DEFAULT_LADDER_STEP);
+        hunters.addProperty("loss_honor", DEFAULT_LOSS_HONOR);
 
         var unlocks = new JsonObject();
         var kills = new JsonObject();

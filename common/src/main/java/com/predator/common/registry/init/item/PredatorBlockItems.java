@@ -17,6 +17,11 @@ public class PredatorBlockItems {
 
     public static final BLibHolder<BlockItem> TRIP_MINE_BLOCK = create("trip_mine", PredatorBlocks.TRIP_MINE_BLOCK);
 
+    /** Oct 11 - one block item per village block, each named exactly as its block. */
+    public static final java.util.List<BLibHolder<BlockItem>> VILLAGE_BLOCK_ITEMS = PredatorBlocks.VILLAGE_BLOCKS.stream()
+        .map(block -> create(block.getPath(), block))
+        .toList();
+
     private static BLibHolder<BlockItem> create(String path, Supplier<? extends Block> blockSupplier) {
         return create(path, blockSupplier, new Item.Properties());
     }

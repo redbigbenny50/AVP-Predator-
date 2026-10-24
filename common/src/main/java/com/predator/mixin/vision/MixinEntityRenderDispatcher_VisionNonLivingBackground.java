@@ -82,9 +82,7 @@ public abstract class MixinEntityRenderDispatcher_VisionNonLivingBackground {
         if (materialId != 0) {
             // Same flush discipline as the lanes: without it, every projectile in a batch samples whichever id
             // happened to be current when the batch flushed.
-            if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
-                bufferSource.endBatch();
-            }
+            com.predator.client.vision.VisionBatchFlush.flush(buffer);
 
             BLibPostEffectFramework.pushMaterialId(materialId);
             frame[2] = 1;
@@ -94,9 +92,7 @@ public abstract class MixinEntityRenderDispatcher_VisionNonLivingBackground {
             return;
         }
 
-        if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
-            bufferSource.endBatch();
-        }
+        com.predator.client.vision.VisionBatchFlush.flush(buffer);
 
         if (pushLaneA) {
             BLibPostEffectFramework.pushBackgroundEntity();
@@ -155,9 +151,7 @@ public abstract class MixinEntityRenderDispatcher_VisionNonLivingBackground {
         var poppedLaneB = frame[1] == 1;
 
         if (frame[2] == 1) {
-            if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
-                bufferSource.endBatch();
-            }
+            com.predator.client.vision.VisionBatchFlush.flush(buffer);
 
             BLibPostEffectFramework.popMaterialId();
         }
@@ -166,9 +160,7 @@ public abstract class MixinEntityRenderDispatcher_VisionNonLivingBackground {
             return;
         }
 
-        if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
-            bufferSource.endBatch();
-        }
+        com.predator.client.vision.VisionBatchFlush.flush(buffer);
 
         if (poppedLaneB) {
             BLibPostEffectFramework.popBackgroundEntityB();

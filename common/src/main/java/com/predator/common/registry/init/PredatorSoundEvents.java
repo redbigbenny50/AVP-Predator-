@@ -286,6 +286,49 @@ public class PredatorSoundEvents {
 
     public static final BLibHolder<SoundEvent> CORPSE_BREAK = create("corpse.break");
 
+    /**
+     * Oct 10 - the battleaxe. His five recordings, levelled to sit with the other weapon sounds (strikes about the
+     * yautja attack grunts, equip and put-away as a matched pair) and trimmed of trailing silence. See BattleaxeSounds
+     * for when each plays.
+     * <p>
+     * [stated] "3 strikes because theres 3 attacks" - one per swing of the yautja's combo, in his order: strike 1 the
+     * horizontal, strike 2 the left diagonal, strike 3 the right diagonal. A player's hit picks any of the three.
+     */
+    public static final BLibHolder<SoundEvent> BATTLEAXE_EQUIP = create("battleaxe.equip");
+
+    public static final BLibHolder<SoundEvent> BATTLEAXE_PUTAWAY = create("battleaxe.putaway");
+
+    public static final BLibHolder<SoundEvent> BATTLEAXE_STRIKE_HORIZONTAL = create("battleaxe.strike_horizontal");
+
+    public static final BLibHolder<SoundEvent> BATTLEAXE_STRIKE_LEFT = create("battleaxe.strike_left");
+
+    public static final BLibHolder<SoundEvent> BATTLEAXE_STRIKE_RIGHT = create("battleaxe.strike_right");
+
+    /**
+     * The slam's downswing - [stated] "if you were to add one it would be at the height of the axe going into the
+     * fall". Strike 2 played at 0.9 pitch (set in sounds.json) so it is heavier than a plain swing. No separate file.
+     */
+    public static final BLibHolder<SoundEvent> BATTLEAXE_SLAM_SWING = create("battleaxe.slam_swing");
+
+    /** Oct 10 - his plasma sword ignite (taking it out) and shut-off (putting it away). See PlasmaSwordItem. */
+    public static final BLibHolder<SoundEvent> PLASMA_SWORD_EQUIP = create("plasma_sword.equip");
+
+    public static final BLibHolder<SoundEvent> PLASMA_SWORD_PUTAWAY = create("plasma_sword.putaway");
+
+    /** Oct 11 - his two plasma sword swings. Separate events so each can be timed to its own peak (PlasmaSwordItem). */
+    public static final BLibHolder<SoundEvent> PLASMA_SWORD_ATTACK_1 = create("plasma_sword.attack1");
+
+    public static final BLibHolder<SoundEvent> PLASMA_SWORD_ATTACK_2 = create("plasma_sword.attack2");
+
+    /**
+     * [stated] Oct 19 - "have the sounds in pred to and they only activate if humans not in": avp_human's freeze and
+     * ice-break sounds, played by the stand-in freeze (FreezeBridge) only when avp_human is not installed - with it,
+     * avp_human's own copies play and these stay silent.
+     */
+    public static final BLibHolder<SoundEvent> STAND_IN_FREEZE_SOLID = create("freeze.freeze_solid");
+
+    public static final BLibHolder<SoundEvent> STAND_IN_FROZEN_BREAK = create("freeze.frozen_break");
+
     private static BLibHolder<SoundEvent> create(String path) {
         return REGISTRY.createHolder(path, () -> SoundEvent.createVariableRangeEvent(PredatorResources.location(path)));
     }

@@ -24,6 +24,8 @@ public class EnUsAdvancementProvider {
         builder.add("advancements.avp_predator.hunt.kill_warden.description", "Kill the Warden");
         builder.add("advancements.avp_predator.hunt.live_fire.title", "Live Fire");
         builder.add("advancements.avp_predator.hunt.live_fire.description", "Hit a hostile with a gun");
+        builder.add("advancements.avp_predator.hunt.hunts_desire.title", "Hunt's Desire");
+        builder.add("advancements.avp_predator.hunt.hunts_desire.description", "Being deemed worthy of being hunted");
         builder.add("advancements.avp_predator.hunt.wy_ape_set.title", "Company Muscle");
         builder.add("advancements.avp_predator.hunt.wy_ape_set.description", "Wear a full set of WY Ape armor");
         builder.add("advancements.avp_predator.hunt.veritanium_set.title", "Wearing the Hunt");

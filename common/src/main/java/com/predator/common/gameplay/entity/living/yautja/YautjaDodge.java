@@ -23,13 +23,21 @@ import net.minecraft.world.phys.Vec3;
 public final class YautjaDodge {
 
     /**
-     * Eight seconds, his revised figure.
+     * The dodge cooldown: a random 3 to 6 seconds, re-rolled after every dodge.
      * <p>
-     * ⚠ This is the dial that decides how much the dodge is worth, NOT the 60%. At 10s it fired once per 3.3 rockets;
-     * at 8s it is roughly one in 2.7. The absorption sets how good one dodge is, the cooldown sets how often one
-     * happens, and the second matters more against anything that fires repeatedly.
+     * Oct 16 - [stated] "the idea is the yautja is a mobile agile target so it does these dodges to actually avoid
+     * getting hit ... a short cooldown on a random timer so its harder to predict ... based on the movies where people
+     * will shoot at the predator but it somehow avoids being shot most of the time." He chose 3-6 s. WAS a fixed 8 s. ⚠
+     * Random on purpose: a fixed cooldown can be counted, and shooting on the beat after a dodge would beat it.
      */
-    public static final int COOLDOWN_TICKS = 160;
+    public static final int MIN_COOLDOWN_TICKS = 60;
+
+    public static final int MAX_COOLDOWN_TICKS = 120;
+
+    /** {@return a fresh cooldown, MIN to MAX inclusive} */
+    public static int rollCooldown(net.minecraft.util.RandomSource random) {
+        return MIN_COOLDOWN_TICKS + random.nextInt(MAX_COOLDOWN_TICKS - MIN_COOLDOWN_TICKS + 1);
+    }
 
     /** How long the roll owns the body. Matches the 1 second {@code evade.roll} clip. */
     public static final int ROLL_TICKS = 20;
@@ -63,12 +71,149 @@ public final class YautjaDodge {
      * IS the attacker, which excludes arrows. One definition of "melee" across both rules, so a bow can never get the
      * damage bonus and can never be dodged either.
      */
-    public static boolean isDodgeable(DamageSource source) {
+    public static boolean isDodgeable(Yautja yautja, DamageSource source) {
         if (source.is(DamageTypeTags.IS_EXPLOSION)) {
             return true;
         }
 
-        return source.is(DamageTypeTags.IS_PLAYER_ATTACK) && source.getDirectEntity() == source.getEntity();
+        // 🚨 Oct 17 - MELEE FROM ANYONE, NOT JUST PLAYERS. This was IS_PLAYER_ATTACK, a tag holding exactly one damage
+        // type (minecraft:player_attack), so every mob's melee - xenomorph claws, zombies, a marine's knife - could
+        // never be dodged: [stated] "i watched one pretty much get swarmed and didnt seem to try to avoid the ones
+        // attacking it only the one it was actively targeting". His ruling has no player limit: the side dodges "avoid
+        // range and melee attacks". A melee hit is now any blow struck directly by a living attacker, whatever damage
+        // type its mod uses. ⚠ Thorns excluded: that is its own swing reflected off armour, not an attack it can see.
+        if (isMeleeHit(source)) {
+            return true;
+        }
+
+        return isRangedHit(yautja, source);
+    }
+
+    /**
+     * Raw damage at which a single hit counts as HEAVY and is rolled from rather than sidestepped. Six hearts: a
+     * battleaxe swing, a sniper round, a big crit.
+     * <p>
+     * Oct 16 - [stated] "the evade roll ... was dodging a heavy attack these would avoid the lighter stuff and also for
+     * its general movement". He set heavy as "any single hit of 12+ damage" and explosions.
+     */
+    public static final float HEAVY_HIT_DAMAGE = 12.0F;
+
+    /**
+     * {@return whether this hit is heavy enough to roll from} ⚠ Judged on the RAW amount, before armour, caliber and
+     * the hunter's hide - it is the weight of the blow the yautja sees coming, not what would have got through.
+     */
+    public static boolean isHeavy(DamageSource source, float amount) {
+        return source.is(DamageTypeTags.IS_EXPLOSION) || amount >= HEAVY_HIT_DAMAGE;
+    }
+
+    /**
+     * {@return whether this is a melee blow a yautja can sidestep} Struck directly (no projectile between) by a living
+     * attacker - player or mob, any damage type - and not thorns or a blast.
+     */
+    public static boolean isMeleeHit(DamageSource source) {
+        return source.getEntity() instanceof LivingEntity
+            && source.getDirectEntity() == source.getEntity()
+            && !source.is(net.minecraft.world.damagesource.DamageTypes.THORNS)
+            && !source.is(DamageTypeTags.IS_EXPLOSION);
+    }
+
+    /** avp_human's bullet damage type - the key YautjaHonor already reads, so the two cannot disagree on a gun. */
+    private static final net.minecraft.resources.ResourceLocation HUMAN_BULLET =
+        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("avp_human", "bullet");
+
+    /**
+     * {@return whether this is a ranged hit a yautja can sidestep}
+     * <p>
+     * Oct 16 - [stated] "any hit that lands: arrows, bolts and gun bullets are dodged like melee". Three ways in: a
+     * projectile (arrows, bolts, thrown weapons, plasma bolts - from anyone, mob or player); avp_human's hitscan
+     * bullets, which have no projectile at all; and TACZ / Point Blank gunfire, recognised exactly as the gun-balancing
+     * rule recognises it. ⚠ Needs someone behind it - a stray arrow from a dispenser has nobody to dodge.
+     */
+    public static boolean isRangedHit(Yautja yautja, DamageSource source) {
+        if (source.getEntity() == null || source.is(DamageTypeTags.IS_EXPLOSION)) {
+            return false;
+        }
+
+        if (source.getDirectEntity() instanceof net.minecraft.world.entity.projectile.Projectile) {
+            return true;
+        }
+
+        if (source.typeHolder().unwrapKey().map(key -> key.location().equals(HUMAN_BULLET)).orElse(false)) {
+            return true;
+        }
+
+        return com.predator.compatibility.guns.GunDamageParity.isThirdPartyGunfire(yautja, source);
+    }
+
+    /** Blocks the sidestep carries the yautja; about two, enough to clear a swing or a shot line. */
+    private static final double SIDESTEP_PUSH = 0.62D;
+
+    private static final double SIDESTEP_LIFT = 0.12D;
+
+    /**
+     * Sidesteps a melee or ranged hit and {@return the clip that matches the side it went} - dodge.left or dodge.right,
+     * judged against the yautja's OWN facing, so the clip and the movement always agree.
+     * <p>
+     * ⚠ The side with room wins: it probes two blocks each way at feet and head height, and only when both are open (or
+     * both blocked) does it fall back to the side it was already moving toward, as the roll always did.
+     */
+    public static com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip sidestep(Yautja yautja, Entity threat) {
+        var away = yautja.position().subtract(threat.position());
+        var flat = new Vec3(away.x, 0.0, away.z);
+        var basis = flat.lengthSqr() < 1.0E-4 ? yautja.getLookAngle() : flat.normalize();
+        var sideways = new Vec3(-basis.z, 0.0, basis.x).normalize();
+
+        var thisWay = isClear(yautja, sideways);
+        var thatWay = isClear(yautja, sideways.reverse());
+
+        if (thisWay == thatWay) {
+            var motion = yautja.getDeltaMovement();
+
+            if (sideways.dot(new Vec3(motion.x, 0.0, motion.z)) < 0.0) {
+                sideways = sideways.reverse();
+            }
+        } else if (!thisWay) {
+            sideways = sideways.reverse();
+        }
+
+        yautja.setDeltaMovement(sideways.x * SIDESTEP_PUSH, SIDESTEP_LIFT, sideways.z * SIDESTEP_PUSH);
+        yautja.hasImpulse = true;
+
+        return sideOf(yautja, sideways);
+    }
+
+    /**
+     * {@return dodge.right if {@code direction} is to the yautja's right, else dodge.left} Right of the facing is
+     * (-look.z, look.x): facing north (0,-1) gives east (1,0).
+     */
+    public static com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip sideOf(Yautja yautja, Vec3 direction) {
+        var yaw = Math.toRadians(yautja.getYRot());
+        var lookX = -Math.sin(yaw);
+        var lookZ = Math.cos(yaw);
+        var rightDot = direction.x * -lookZ + direction.z * lookX;
+
+        return rightDot >= 0.0
+            ? com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip.RIGHT
+            : com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip.LEFT;
+    }
+
+    private static boolean isClear(Yautja yautja, Vec3 direction) {
+        var level = yautja.level();
+
+        for (var step = 1; step <= 2; step++) {
+            var probe = yautja.position().add(direction.scale(step));
+            var feet = net.minecraft.core.BlockPos.containing(probe.x, probe.y + 0.1, probe.z);
+            var head = net.minecraft.core.BlockPos.containing(probe.x, probe.y + yautja.getEyeHeight(), probe.z);
+
+            if (
+                !level.getBlockState(feet).getCollisionShape(level, feet).isEmpty()
+                    || !level.getBlockState(head).getCollisionShape(level, head).isEmpty()
+            ) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

@@ -135,9 +135,18 @@ public class YautjaBowGoal extends Goal {
         // leave; at melee reach this goal refuses by design, so it swung instead. Refreshed every tick while a shot
         // exists, and allowed to lapse the moment it does not — out of range, no line of sight, or prey inside reach —
         // so the ordinary approach and melee take over exactly when they should.
-        yautja.setRangedHoldUntil(yautja.tickCount + RANGE_HOLD_TICKS);
+        //
+        // 🚨 Oct 16 - THAT HOLD WAS RENEWED EVERY TICK A SHOT EXISTED, through the aim AND the 45-tick wait between
+        // arrows, so at range the yautja planted its feet and never closed: [stated] tester, "they really only use
+        // ranged attacks while standing still". It now plants ONLY for the release - from the draw starting to the
+        // arrow leaving - and weaves in (YautjaSkirmish) through the aim and the wait. The original problem (charging
+        // into melee before the first arrow) stays solved: the weave closes slower than the chase and stops short of
+        // melee reach, and this goal still refuses at melee reach so the swap to a melee weapon takes over there.
+        if (releaseAtTick >= 0) {
+            yautja.setRangedHoldUntil(yautja.tickCount + RANGE_HOLD_TICKS);
+        }
 
-        // ⚠ Face the target: with the approach suppressed, nothing else turns it toward what it is shooting.
+        // Face the target while aiming, moving or not.
         yautja.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
         if (!raised) {
@@ -150,8 +159,8 @@ public class YautjaBowGoal extends Goal {
             return;
         }
 
-        // ⚠ The raise, THEN the aim hold, have to finish before the first arrow, and no shot may start while one is
-        // still being drawn.
+        // ⚠ The raise, THEN the aim, have to finish before the first arrow, and no shot may start while one is still
+        // being drawn.
         if (yautja.tickCount < readyAtTick || yautja.tickCount < nextShotTick || releaseAtTick >= 0) {
             return;
         }

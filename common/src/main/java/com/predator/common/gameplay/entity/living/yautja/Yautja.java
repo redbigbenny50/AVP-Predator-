@@ -223,6 +223,7 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
         builder.define(DATA_CLIMB_VAULTING, false);
         builder.define(DATA_CLIMB_HANGING, false);
         builder.define(DATA_DODGE_SEQUENCE, (byte) 0);
+        builder.define(DATA_EVADE_CLIP, (byte) 0);
         builder.define(DATA_HUNTER, false);
         builder.define(DATA_ROAR_SEQUENCE, (byte) 0);
         builder.define(DATA_ATTACK_ANIMATION, (byte) 0);
@@ -992,6 +993,8 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
 
             if (!held.isEmpty() && inventory.addItemStack(held.copy()) instanceof BLibInventory.AddResult.Success) {
                 setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+
+                playWeaponSwapSound(held.getItem(), false);
             }
 
             return;
@@ -1036,6 +1039,30 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
         }
 
         setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(wanted));
+
+        // Oct 10 - his equip / put-away sounds when the yautja draws a weapon from or returns it to the rack. Only
+        // here, where the yautja actually swaps weapons: the spawn loadout and the debug menu also set the hand, and a
+        // freshly spawned yautja should not announce its weapon. Drawing one that has a sound wins over stowing one.
+        if (!playWeaponSwapSound(wanted, true)) {
+            playWeaponSwapSound(stowed.getItem(), false);
+        }
+    }
+
+    /** {@return whether {@code item} has a draw / stow sound, which is then played} */
+    private boolean playWeaponSwapSound(Item item, boolean drawn) {
+        if (item instanceof com.predator.common.gameplay.item.battleaxe.BattleaxeItem) {
+            com.predator.common.gameplay.item.battleaxe.BattleaxeSounds.playEquip(this, drawn);
+
+            return true;
+        }
+
+        if (item instanceof com.predator.common.gameplay.item.PlasmaSwordItem) {
+            com.predator.common.gameplay.item.PlasmaSwordItem.playEquip(this, drawn);
+
+            return true;
+        }
+
+        return false;
     }
 
     /** {@return the weapon that answers what the target is holding, or null when nothing needs matching} */
@@ -1170,6 +1197,10 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
      * Bumped per dodge, so tracking clients play the roll. A counter, not a flag — two rolls in a row must both fire.
      */
     private static final EntityDataAccessor<Byte> DATA_DODGE_SEQUENCE =
+        SynchedEntityData.defineId(Yautja.class, EntityDataSerializers.BYTE);
+
+    /** Oct 16: WHICH evade clip the last bump of DATA_DODGE_SEQUENCE plays. See YautjaEvadeClip. */
+    private static final EntityDataAccessor<Byte> DATA_EVADE_CLIP =
         SynchedEntityData.defineId(Yautja.class, EntityDataSerializers.BYTE);
 
     /**
@@ -1509,7 +1540,24 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
         // window does nothing about it — the M6B rocket kills a Clan Leader in 24 seconds where a sword takes
         // 74. The dodge is the only answer this creature has to per-hit damage, and it has to see the hit
         // before anything else decides the hit does not count.
-        if (!level().isClientSide && YautjaDodge.isDodgeable(source) && tryDodge(YautjaDodge.threatFrom(source, this))) {
+        // Oct 16 - MID-DODGE IT TAKES NO DAMAGE. [stated] "when it dodges for like a second or so it takes no damage",
+        // and a blast still hurts a little: [stated] "Keep the 40%". ⚠ Anything vanilla marks as ignoring
+        // invulnerability
+        // (/kill, the void) still lands - a dodging yautja that falls out of the world must not survive it.
+        if (!level().isClientSide && isEvadeImmune() && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            if (source.is(DamageTypeTags.IS_EXPLOSION)) {
+                lastHurtTick = tickCount;
+                return super.hurt(source, amount * YautjaDodge.EXPLOSION_DAMAGE_TAKEN);
+            }
+
+            return false;
+        }
+
+        if (
+            !level().isClientSide && YautjaDodge.isDodgeable(this, source)
+            // Oct 16 - heavy hits (12+ raw, or any blast) get the ROLL, lighter ones the SIDESTEP. [stated]
+                && tryDodge(YautjaDodge.threatFrom(source, this), !YautjaDodge.isHeavy(source, amount))
+        ) {
             if (source.is(DamageTypeTags.IS_EXPLOSION)) {
                 // Rolled clear of the blast but still inside it: 60% absorbed, his figure.
                 lastHurtTick = tickCount;
@@ -1517,7 +1565,9 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
                 return super.hurt(source, amount * YautjaDodge.EXPLOSION_DAMAGE_TAKEN);
             }
 
-            // Melee is negated outright — a yautja can sidestep a sword, it cannot sidestep a blast radius.
+            // Melee AND ranged hits are negated outright - a yautja can sidestep a sword or a shot, it cannot sidestep
+            // a
+            // blast radius. [stated] Oct 16: arrows, bolts and gun bullets "are dodged like melee".
             return false;
         }
 
@@ -1816,17 +1866,78 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
      * dodge.
      */
     public boolean tryDodge(net.minecraft.world.entity.Entity threat) {
+        return tryDodge(threat, false);
+    }
+
+    /**
+     * {@return whether it dodged} {@code sidestep} picks the move: true for a melee or ranged hit (dodge.left/right),
+     * false for a blast, an inbound rocket or a net (evade.roll).
+     * <p>
+     * Oct 16 - [stated] "dodge left and dodge right are meant to avoid range and melee attacks like the roll does". One
+     * cooldown covers all of them, so a sidestep and a roll can never both answer the same attack.
+     */
+    public boolean tryDodge(net.minecraft.world.entity.Entity threat, boolean sidestep) {
         if (level().isClientSide || tickCount < nextDodgeTick || isClimbing()) {
             return false;
         }
 
-        dodgeUntilTick = tickCount + YautjaDodge.ROLL_TICKS;
-        nextDodgeTick = tickCount + YautjaDodge.COOLDOWN_TICKS;
+        nextDodgeTick = tickCount + YautjaDodge.rollCooldown(random);
 
-        entityData.set(DATA_DODGE_SEQUENCE, (byte) (entityData.get(DATA_DODGE_SEQUENCE) + 1));
-        YautjaDodge.roll(this, threat);
+        if (sidestep) {
+            startEvade(YautjaDodge.sidestep(this, threat), true);
+        } else {
+            startEvade(com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip.ROLL, true);
+            YautjaDodge.roll(this, threat);
+        }
 
         return true;
+    }
+
+    /**
+     * Plays an evade clip and holds the body for its length. Server side; tracking clients play it from the synced id
+     * and set the same hold (dispatchDodgeAnimation). ⚠ Moves nothing - the caller moves the yautja.
+     */
+    public void startEvade(com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip clip) {
+        startEvade(clip, false);
+    }
+
+    /**
+     * {@code immune}: whether it takes no damage while the clip plays. Oct 16 - [stated] "when it dodges for like a
+     * second or so it takes no damage", for the sidestep, the roll and the backward dash; NOT the weave's hops or the
+     * lunge, which only borrow the clips. See {@link #isEvadeImmune}.
+     */
+    public void startEvade(com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip clip, boolean immune) {
+        if (level().isClientSide) {
+            return;
+        }
+
+        if (immune) {
+            evadeImmuneUntilTick = tickCount + clip.ticks();
+        }
+
+        dodgeUntilTick = tickCount + clip.ticks();
+        entityData.set(DATA_EVADE_CLIP, clip.id());
+        entityData.set(DATA_DODGE_SEQUENCE, (byte) (entityData.get(DATA_DODGE_SEQUENCE) + 1));
+    }
+
+    /** Server: until this tick a dodge makes it untouchable (startEvade with immune). */
+    private int evadeImmuneUntilTick;
+
+    /** {@return whether it is mid-dodge and so takes no damage} */
+    public boolean isEvadeImmune() {
+        return tickCount < evadeImmuneUntilTick;
+    }
+
+    // ---------------------------------------------------------------- the lunge (see YautjaLungeGoal)
+
+    private int nextLungeTick;
+
+    public int getNextLungeTick() {
+        return nextLungeTick;
+    }
+
+    public void setLungeCooldown(int ticks) {
+        this.nextLungeTick = tickCount + ticks;
     }
 
     public boolean isClimbHanging() {
@@ -1946,6 +2057,14 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
 
     public void setRangedHoldUntil(int tick) {
         this.rangedHoldUntil = tick;
+    }
+
+    /**
+     * {@return whether the main hand holds a weapon it fights with at range} The same test the weapon swap uses, so a
+     * veritanium bow with no arrows is not one. Read by YautjaSkirmish.
+     */
+    public boolean isRangedWeaponInHand() {
+        return isWeapon(getMainHandItem(), true);
     }
 
     /** {@return whether the fall-back leap is holding it at range right now} Read by YautjaCombat.MOVE_TO_TARGET. */
@@ -2089,16 +2208,36 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
     private void dispatchDodgeAnimation() {
         var stamped = entityData.get(DATA_DODGE_SEQUENCE);
 
+        // ⚠ The first look only RECORDS the counter. Before Oct 16 a yautja whose counter was not zero replayed its
+        // last dodge every time a player loaded it in.
+        if (!dodgeSequenceSeen) {
+            dodgeSequenceSeen = true;
+            lastDispatchedDodge = stamped;
+            return;
+        }
+
         if (stamped == lastDispatchedDodge) {
             return;
         }
 
         lastDispatchedDodge = stamped;
 
-        if (stamped != 0) {
-            animationDispatcher.dodge();
+        var clip = com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip.byId(entityData.get(DATA_EVADE_CLIP));
+
+        if (clip == null) {
+            clip = com.predator.common.gameplay.entity.living.yautja.animation.YautjaEvadeClip.ROLL;
         }
+
+        // 🚨 Oct 16 - THE CLIENT HOLDS THE BODY TOO. Only the server ever set dodgeUntilTick, so the client's
+        // isDodging() was always false and its locomotion state took the body straight back - the roll's lift flipped
+        // it to the jump clip the next tick, cutting the roll off. YautjaBodyState reads isDodging() here as well.
+        dodgeUntilTick = tickCount + clip.ticks();
+        lastDispatchedBodyState = null;
+        animationDispatcher.evade(clip);
     }
+
+    /** Client: whether the dodge counter has been seen once, so the first sighting is not taken as a new dodge. */
+    private boolean dodgeSequenceSeen;
 
     private void dispatchRoarAnimation() {
         var stamped = entityData.get(DATA_ROAR_SEQUENCE);
@@ -2388,6 +2527,10 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
         // the MOVE flag so the walk cannot fight it, and it ends its own hold as soon as the distance is bought.
         goalSelector.addGoal(1, new YautjaFallBackGoal(this));
 
+        // Oct 16 - [stated] the dodge.forward lunge: a gap-closer onto a target 5-10 blocks away. Priority 2, with the
+        // weapon goals; the fall-back at 1 outranks it, so it never lunges INTO a crowd it is backing away from.
+        goalSelector.addGoal(2, new com.predator.common.gameplay.entity.living.yautja.goal.YautjaLungeGoal(this));
+
         // ⚠ Holds no goal flags, so it never blocks the melee goal or the walk. That is what lets the caster fire on
         // its own target while the yautja is fighting something else entirely.
         goalSelector.addGoal(
@@ -2616,7 +2759,11 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
             // ⚠ PRE-EMPTIVE. Rolling only when the blast lands means always eating the reduced hit; spotting the
             // rocket in flight is what makes it a dodge rather than a damage resistance. His spec asks for
             // both, and the same cooldown covers them so it cannot do both to one rocket.
-            if (!isDodging()) {
+            // 🚨 Oct 16 - GATED ON THE COOLDOWN, NOT isDodging(). The weave's side hops now hold the body as a dodge
+            // (animation only), so "not dodging" would have blinded this watcher for every hop and let a rocket through
+            // that it should roll from. A roll can only fire off cooldown anyway, so that is the honest gate - and it
+            // skips the scan for the whole cooldown, which is cheaper than before.
+            if (tickCount >= nextDodgeTick) {
                 var threat = YautjaDodge.incomingThreat(this, THREAT_WATCH_RADIUS);
 
                 if (threat != null) {
@@ -2745,6 +2892,41 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
      * Client-side because that is where Az commands are dispatched, and because every input is already there — see
      * {@link YautjaBodyState} for why none of this needs syncing.
      */
+    /** The player tick a morph copy last advanced on; see {@link #tickAsMorph}. */
+    private int lastMorphTick = Integer.MIN_VALUE;
+
+    /**
+     * ReMorphed / Walkers: drives a MORPH COPY of this yautja from the player wearing it.
+     * <p>
+     * [stated] Oct 23 - morphs into our models did not animate. Walkers keeps a client-side copy of the mob and draws
+     * it on the player, but it never TICKS that copy - and a yautja chooses its walk, run, jump and land clips inside
+     * its own client tick (YautjaBodyState, from how far it moved since the last tick). So the copy chose nothing and
+     * slid along in whatever pose it started in.
+     * </p>
+     * <p>
+     * Called by {@code WalkersShapeAnimations} every frame Walkers draws the copy; only the frames that open a NEW
+     * player tick do anything, so the copy advances exactly once per tick like a real yautja. It moves the copy to the
+     * player (previous tick and this one), keeps the airborne counters the jump and land clips read, and then runs the
+     * same clip choice a real yautja runs. A real yautja never reaches this: Walkers only hands it its own copies.
+     * </p>
+     */
+    public void tickAsMorph(net.minecraft.world.entity.player.Player player) {
+        if (player.tickCount == lastMorphTick) {
+            return;
+        }
+
+        lastMorphTick = player.tickCount;
+
+        xo = player.xo;
+        yo = player.yo;
+        zo = player.zo;
+        setPosRaw(player.getX(), player.getY(), player.getZ());
+        setOnGround(player.onGround());
+
+        updateAirborneTicks();
+        dispatchBodyAnimations();
+    }
+
     private void dispatchBodyAnimations() {
         var state = YautjaBodyState.select(this);
 

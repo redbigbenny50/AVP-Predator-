@@ -29,6 +29,18 @@ public class BlockLootTableProvider extends FabricBlockLootTableProvider {
 
     private void generateSelfDrops() {
         dropSelf(PredatorBlocks.TRIP_MINE_BLOCK);
+
+        // Oct 11 - the village set drops itself, a double slab two, like vanilla stone.
+        PredatorBlocks.VILLAGE_FAMILIES.forEach(family -> {
+            dropSelf(family.base());
+            add(family.slab(), this::createSlabItemTable);
+            dropSelf(family.stairs());
+            dropSelf(family.wall());
+        });
+        PredatorBlocks.GLYPHS.forEach(this::dropSelf);
+        PredatorBlocks.CHISELED.forEach(this::dropSelf);
+        dropSelf(PredatorBlocks.GREY_VILLAGE_PILLAR);
+        PredatorBlocks.BORDERS.forEach(this::dropSelf);
         // ⚠ The placed gauntlet drops NOTHING as loot: mining it spills the contents from the block entity and the
         // gauntlet itself is destroyed ([stated] "it drops the items and gauntlet breaks. it doesnt drop itself").
         add(PredatorBlocks.GAUNTLET_BLOCK, block -> noDrop());

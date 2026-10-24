@@ -72,6 +72,16 @@ public final class HuntLedger extends SavedData {
 
         Stage stage = Stage.NONE;
 
+        /** Oct 16: an op has exempted this player from the hunts. Saved with the world. */
+        boolean exempt;
+
+        /**
+         * Oct 16: this player LOST their last hunt - killed by their own Hunter - so the next Hunter's Moon passes them
+         * by. [stated] "give a breather for people who lose hunts so if you lose a hunt it should skip the next hunt".
+         * Used up by that moon.
+         */
+        boolean skipNextMoon;
+
         long moonDay;
 
         boolean sleptOnMoon;
@@ -219,6 +229,51 @@ public final class HuntLedger extends SavedData {
         setDirty();
     }
 
+    /** {@return whether an op has exempted this player from the hunts} */
+    public boolean isExempt(UUID player) {
+        var entry = entries.get(player);
+        return entry != null && entry.exempt;
+    }
+
+    /** Sets or clears a player's exemption. {@return whether it changed} */
+    public boolean setExempt(UUID player, boolean exempt) {
+        var entry = entry(player);
+
+        if (entry.exempt == exempt) {
+            return false;
+        }
+
+        entry.exempt = exempt;
+        setDirty();
+        return true;
+    }
+
+    /** The player lost this hunt: the next Hunter's Moon passes them by. */
+    void markLost(Entry entry) {
+        entry.skipNextMoon = true;
+        setDirty();
+    }
+
+    /**
+     * The Hunter's Moon that a lost hunt earned a breather from: uses up the breather and marks this moon as seen, so
+     * the same night does not start a hunt after all.
+     */
+    void skipMoon(Entry entry, long day) {
+        entry.skipNextMoon = false;
+        entry.moonDay = day;
+        setDirty();
+    }
+
+    /** {@return every entry with a hunt in progress, online player or not} */
+    java.util.List<Entry> runningHunts() {
+        return entries.values().stream().filter(e -> e.stage != Stage.NONE).toList();
+    }
+
+    /** {@return every exempted player, in no particular order} */
+    public java.util.List<UUID> exemptPlayers() {
+        return entries.entrySet().stream().filter(e -> e.getValue().exempt).map(java.util.Map.Entry::getKey).toList();
+    }
+
     /** The hunt is over, whichever way it ended. The ladder and the count of hunts faced are kept. */
     void endHunt(Entry entry) {
         entry.stage = Stage.NONE;
@@ -292,6 +347,9 @@ public final class HuntLedger extends SavedData {
 
             var entry = ledger.entry(compound.getUUID("id"));
             entry.stage = Stage.byName(compound.getString("stage"));
+            // ⚠ Absent in worlds saved before Oct 16, and getBoolean reads an absent key as false: nobody exempt.
+            entry.exempt = compound.getBoolean("exempt");
+            entry.skipNextMoon = compound.getBoolean("skip_next_moon");
             entry.moonDay = compound.getLong("moon_day");
             entry.sleptOnMoon = compound.getBoolean("slept_on_moon");
             entry.callingCardPlaced = compound.getBoolean("calling_card_placed");
@@ -329,6 +387,8 @@ public final class HuntLedger extends SavedData {
             var compound = new CompoundTag();
             compound.putUUID("id", id);
             compound.putString("stage", entry.stage.name());
+            compound.putBoolean("exempt", entry.exempt);
+            compound.putBoolean("skip_next_moon", entry.skipNextMoon);
             compound.putLong("moon_day", entry.moonDay);
             compound.putBoolean("slept_on_moon", entry.sleptOnMoon);
             compound.putBoolean("calling_card_placed", entry.callingCardPlaced);

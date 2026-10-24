@@ -87,7 +87,16 @@ public final class PredatorSceneColor extends AbstractTexture {
      * Copies the current colour attachment into the scratch texture. Called once per frame from
      * {@code MixinLevelRenderer_SceneColorCapture}, immediately before the entity pass.
      */
+    /** Pre-Oct-9 entry point, kept for any caller without the camera: copies the whole screen as before. */
     public static void capture() {
+        capture(null, null, null);
+    }
+
+    public static void capture(
+        net.minecraft.client.@org.jetbrains.annotations.Nullable Camera camera,
+        org.joml.@org.jetbrains.annotations.Nullable Matrix4f viewMatrix,
+        org.joml.@org.jetbrains.annotations.Nullable Matrix4f projectionMatrix
+    ) {
         // ⚠ Veil stage-1 instrument — free when the probe flag is off; see PredatorVeilProbe.
         PredatorVeilProbe.tick();
 
@@ -143,6 +152,20 @@ public final class PredatorSceneColor extends AbstractTexture {
             return;
         }
 
+        // Oct 9 - PERFORMANCE (reports of FPS loss "caused by the predator cloaking"): this copied the WHOLE screen
+        // into the refraction texture every frame for every player with the mod installed - plus a GPU state query
+        // that can stall the pipeline - whether or not a cloaked mob was anywhere near. Only a cloaked entity reads
+        // the copy, so it is taken only when one is close enough to be on screen. With nobody cloaked, the cloak now
+        // costs nothing per frame.
+        // Oct 9 - [stated] "lets do all three": copy only what a VISIBLE cloak needs. region() answers null when no
+        // cloaked entity is on screen (no copy at all), the padded screen rectangle around the visible ones, or the
+        // whole screen whenever the projection cannot be trusted.
+        var region = region(minecraft, camera, viewMatrix, projectionMatrix, targetWidth, targetHeight);
+
+        if (region == null) {
+            return;
+        }
+
         try {
             var texture = instance();
 
@@ -156,14 +179,21 @@ public final class PredatorSceneColor extends AbstractTexture {
             // be bound there — under Sodium that is not reliably the main target. Pin it explicitly and restore the
             // previous binding on the way out. 36008 = GL_READ_FRAMEBUFFER, 36010 = GL_READ_FRAMEBUFFER_BINDING —
             // spec literals, since LWJGL constant spellings are the one thing this sandbox cannot verify.
-            var previousReadFramebuffer = org.lwjgl.opengl.GL11.glGetInteger(36010);
+            // Oct 9 - NO PIPELINE STALL. Asking the driver which framebuffer is bound (glGetInteger) can make the CPU
+            // wait for the GPU. In plain play the level is being drawn into the main target, so that is the read
+            // binding to restore. Only where another renderer may have swapped framebuffers (Veil) is the binding
+            // asked for, as before.
+            var previousReadFramebuffer = READ_BINDING_MAY_DIFFER
+                ? org.lwjgl.opengl.GL11.glGetInteger(36010)
+                : mainTarget.frameBufferId;
             com.mojang.blaze3d.platform.GlStateManager._glBindFramebuffer(36008, mainTarget.frameBufferId);
 
             var activeTexture = com.mojang.blaze3d.platform.GlStateManager._getActiveTexture();
             var previousBinding = RenderSystem.getShaderTexture(0);
             RenderSystem.bindTexture(texture.getId());
 
-            org.lwjgl.opengl.GL11.glCopyTexSubImage2D(3553, 0, 0, 0, 0, 0, targetWidth, targetHeight);
+            // Same offset in the texture as on screen, so the ripple samples it exactly as it would a full copy.
+            org.lwjgl.opengl.GL11.glCopyTexSubImage2D(3553, 0, region[0], region[1], region[0], region[1], region[2], region[3]);
 
             RenderSystem.bindTexture(previousBinding);
             com.mojang.blaze3d.platform.GlStateManager._activeTexture(activeTexture);
@@ -186,6 +216,172 @@ public final class PredatorSceneColor extends AbstractTexture {
      * screen-space sampling produces nonsense, and it was also where the buffer desync crash surfaced. The cloak falls
      * back to the plain silhouette for those.
      */
+    /** Oct 9 - a cloaked entity further than this is never copied for. */
+    private static final double CLOAK_COPY_RANGE = 96.0;
+
+    /** Oct 9 - grow each cloaked entity's box by this much (blocks) for poses, weapons and dreadlocks past the box. */
+    private static final double BOX_GROWTH = 0.6;
+
+    /** Oct 9 - screen padding around the cloaked area for the ripple's outer edge: at least this many pixels ... */
+    private static final int MIN_PADDING_PIXELS = 48;
+
+    /** ... or this fraction of the area's own size, whichever is larger (a near cloak ripples over more pixels). */
+    private static final double PADDING_FRACTION = 0.35;
+
+    /** Oct 9 - covering more than this share of the screen, the whole screen is copied (simpler, no saving to lose). */
+    private static final double FULL_COPY_SHARE = 0.6;
+
+    /** Oct 9 - whether something other than vanilla may have changed the read framebuffer (Veil's own buffers). */
+    private static final boolean READ_BINDING_MAY_DIFFER = classExists("foundry.veil.Veil");
+
+    /**
+     * Oct 9 - {@return the screen rectangle to copy as {x, y, width, height} in framebuffer pixels (origin
+     * bottom-left), or null when no cloaked entity is visible} <p> Each cloaked entity within range has its (grown) box
+     * projected to the screen; boxes wholly off screen or behind the camera are skipped, and the visible ones are
+     * joined into one rectangle with generous padding for the ripple's outer edge. Falls back to the WHOLE screen when
+     * the projection cannot be trusted: no camera matrices, the camera inside a cloaked box, a box straddling the
+     * camera plane, or the area already covering most of the screen. Being too large only costs time; being too small
+     * would show stale image at the ripple's edge.
+     */
+    private static int @org.jetbrains.annotations.Nullable [] region(
+        Minecraft minecraft,
+        net.minecraft.client.@org.jetbrains.annotations.Nullable Camera camera,
+        org.joml.@org.jetbrains.annotations.Nullable Matrix4f viewMatrix,
+        org.joml.@org.jetbrains.annotations.Nullable Matrix4f projectionMatrix,
+        int width,
+        int height
+    ) {
+        var ids = PredatorCloakClientState.cloakedIds();
+
+        if (ids.isEmpty() || minecraft.level == null) {
+            return null;
+        }
+
+        var full = new int[] { 0, 0, width, height };
+
+        if (camera == null || viewMatrix == null || projectionMatrix == null) {
+            return anyCloakedNear(minecraft, minecraft.gameRenderer.getMainCamera().getPosition()) ? full : null;
+        }
+
+        var cameraPos = camera.getPosition();
+        var viewProjection = new org.joml.Matrix4f(projectionMatrix).mul(viewMatrix);
+        var corner = new org.joml.Vector4f();
+        double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
+        var anyVisible = false;
+
+        for (var id : ids) {
+            var entity = minecraft.level.getEntity(id);
+
+            // Oct 10 - only an entity that really is cloaked (a reused id may now belong to someone else).
+            if (
+                !(entity instanceof net.minecraft.world.entity.LivingEntity living)
+                    || !PredatorCloakClientState.isCloaked(living)
+                    || entity.distanceToSqr(cameraPos) > CLOAK_COPY_RANGE * CLOAK_COPY_RANGE
+            ) {
+                continue;
+            }
+
+            // Grow for overhanging parts, and by its speed so a fast mover is covered wherever it is drawn this frame.
+            var growth = BOX_GROWTH + entity.getDeltaMovement().length() * 2.0;
+            var box = entity.getBoundingBox().inflate(growth);
+
+            if (box.contains(cameraPos)) {
+                return full;
+            }
+
+            double eMinX = Double.MAX_VALUE, eMinY = Double.MAX_VALUE, eMaxX = -Double.MAX_VALUE, eMaxY = -Double.MAX_VALUE;
+            var behind = 0;
+
+            for (var i = 0; i < 8; i++) {
+                corner.set(
+                    (float) (((i & 1) == 0 ? box.minX : box.maxX) - cameraPos.x),
+                    (float) (((i & 2) == 0 ? box.minY : box.maxY) - cameraPos.y),
+                    (float) (((i & 4) == 0 ? box.minZ : box.maxZ) - cameraPos.z),
+                    1.0F
+                );
+                viewProjection.transform(corner);
+
+                if (corner.w <= 0.05F) {
+                    behind++;
+                    continue;
+                }
+
+                var ndcX = corner.x / corner.w;
+                var ndcY = corner.y / corner.w;
+                eMinX = Math.min(eMinX, ndcX);
+                eMaxX = Math.max(eMaxX, ndcX);
+                eMinY = Math.min(eMinY, ndcY);
+                eMaxY = Math.max(eMaxY, ndcY);
+            }
+
+            if (behind == 8) {
+                continue; // wholly behind the camera
+            }
+
+            if (behind > 0) {
+                return full; // straddles the camera plane - its screen extent is unbounded
+            }
+
+            if (eMaxX < -1.0 || eMinX > 1.0 || eMaxY < -1.0 || eMinY > 1.0) {
+                continue; // wholly off screen
+            }
+
+            anyVisible = true;
+            minX = Math.min(minX, eMinX);
+            maxX = Math.max(maxX, eMaxX);
+            minY = Math.min(minY, eMinY);
+            maxY = Math.max(maxY, eMaxY);
+        }
+
+        if (!anyVisible) {
+            return null;
+        }
+
+        // NDC (-1..1) to framebuffer pixels, bottom-left origin - the same origin glCopyTexSubImage2D uses.
+        var px0 = (minX * 0.5 + 0.5) * width;
+        var px1 = (maxX * 0.5 + 0.5) * width;
+        var py0 = (minY * 0.5 + 0.5) * height;
+        var py1 = (maxY * 0.5 + 0.5) * height;
+        var padX = Math.max(MIN_PADDING_PIXELS, (px1 - px0) * PADDING_FRACTION);
+        var padY = Math.max(MIN_PADDING_PIXELS, (py1 - py0) * PADDING_FRACTION);
+        var x0 = Math.max(0, (int) Math.floor(px0 - padX));
+        var y0 = Math.max(0, (int) Math.floor(py0 - padY));
+        var x1 = Math.min(width, (int) Math.ceil(px1 + padX));
+        var y1 = Math.min(height, (int) Math.ceil(py1 + padY));
+
+        if (x1 <= x0 || y1 <= y0) {
+            return null;
+        }
+
+        if ((double) (x1 - x0) * (y1 - y0) > FULL_COPY_SHARE * width * height) {
+            return full;
+        }
+
+        return new int[] { x0, y0, x1 - x0, y1 - y0 };
+    }
+
+    /** {@return whether any cloaked entity the client knows of is within copy range of a point} */
+    private static boolean anyCloakedNear(Minecraft minecraft, net.minecraft.world.phys.Vec3 point) {
+        for (var id : PredatorCloakClientState.cloakedIds()) {
+            var entity = minecraft.level.getEntity(id);
+
+            if (entity != null && entity.distanceToSqr(point) <= CLOAK_COPY_RANGE * CLOAK_COPY_RANGE) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean classExists(String name) {
+        try {
+            Class.forName(name, false, PredatorSceneColor.class.getClassLoader());
+            return true;
+        } catch (Throwable throwable) {
+            return false;
+        }
+    }
+
     public static boolean isRenderingLevel() {
         return renderingLevel;
     }

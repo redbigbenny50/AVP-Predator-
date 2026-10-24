@@ -81,9 +81,7 @@ public abstract class MixinLivingEntityRenderer_VisionPerBoneLight {
         var pushLaneB = classification.isBackgroundUnderNew();
 
         if (pushLaneA || pushLaneB) {
-            if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
-                bufferSource.endBatch();
-            }
+            com.predator.client.vision.VisionBatchFlush.flush(buffer);
 
             if (pushLaneA) {
                 BLibPostEffectFramework.pushBackgroundEntity();
@@ -102,9 +100,7 @@ public abstract class MixinLivingEntityRenderer_VisionPerBoneLight {
         var materialId = PredatorHeatMaterials.materialIdFor(entity);
 
         if (materialId != 0) {
-            if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
-                bufferSource.endBatch();
-            }
+            com.predator.client.vision.VisionBatchFlush.flush(buffer);
 
             BLibPostEffectFramework.pushMaterialId(materialId);
             frame[3] = 1;
@@ -152,9 +148,7 @@ public abstract class MixinLivingEntityRenderer_VisionPerBoneLight {
         var poppedMaterialId = frame[3] == 1;
 
         if (poppedMaterialId) {
-            if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
-                bufferSource.endBatch();
-            }
+            com.predator.client.vision.VisionBatchFlush.flush(buffer);
 
             BLibPostEffectFramework.popMaterialId();
         }
@@ -164,9 +158,7 @@ public abstract class MixinLivingEntityRenderer_VisionPerBoneLight {
         }
 
         if (poppedLaneA || poppedLaneB) {
-            if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
-                bufferSource.endBatch();
-            }
+            com.predator.client.vision.VisionBatchFlush.flush(buffer);
 
             if (poppedLaneB) {
                 BLibPostEffectFramework.popBackgroundEntityB();

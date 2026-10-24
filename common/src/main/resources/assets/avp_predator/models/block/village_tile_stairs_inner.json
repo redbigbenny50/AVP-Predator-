@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "avp_predator:block/village_tiles",
+    "side": "avp_predator:block/village_tiles",
+    "top": "avp_predator:block/village_tiles"
+  }
+}

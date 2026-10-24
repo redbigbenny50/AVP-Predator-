@@ -10,7 +10,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -55,8 +54,13 @@ public class NetProjectile extends ThrowableItemProjectile implements LeafPierci
             return;
         }
 
-        if (result.getEntity() instanceof Mob mob && PredatorNet.canBeNetted(mob)) {
-            PredatorNet.capture(mob);
+        // 🚨 Oct 16 - WAS "instanceof Mob". PLAYERS ARE NOT MOBS, so every player hit fell through to the drop below:
+        // [stated] tester, "players cant seem to be netted at all it just hits against them like a wall and drops". The
+        // same mistake was already found and fixed inside PredatorNet.canBeNetted (see its warning) - this was the one
+        // caller still testing Mob. canBeNetted is the single authority on who can be netted (players included, the
+        // net_immune tag and the escape grace excluded); the struggle bar and timed release then take over.
+        if (result.getEntity() instanceof LivingEntity living && PredatorNet.canBeNetted(living)) {
+            PredatorNet.capture(living);
             splat(PredatorSoundEvents.PROJECTILE_NET_CATCH.get());
         } else {
             // ⚠ A refused target still drops the net rather than deleting it. Bouncing off a wither should cost the

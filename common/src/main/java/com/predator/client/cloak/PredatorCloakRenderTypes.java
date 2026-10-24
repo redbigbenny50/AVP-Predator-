@@ -13,10 +13,10 @@ import java.util.Map;
  * The cloak's render types: {@code entityNoOutline} without the translucency sort.
  * <p>
  * ⚠ Oct 9 — WHY. Vanilla sorts every translucent batch back-to-front when it is drawn. With a group of cloaked yautja
- * on screen that sort was 26-42% of the render thread, and batching all cloaked entities together (see the
- * cross-entity note in {@link PredatorCloakRendering}) did not shrink it: the cost scales with the number of quads, not
- * the number of batches. Each cloak pass is a single faint layer (5-14% alpha) drawn with COLOR_WRITE only, so the
- * order its own quads blend in is not something the eye can read at that level - sorting them buys nothing visible.
+ * on screen that sort was 26-42% of the render thread, and batching all cloaked entities together (see the cross-entity
+ * note in {@link PredatorCloakRendering}) did not shrink it: the cost scales with the number of quads, not the number
+ * of batches. Each cloak pass is a single faint layer (5-14% alpha) drawn with COLOR_WRITE only, so the order its own
+ * quads blend in is not something the eye can read at that level - sorting them buys nothing visible.
  * <p>
  * Identical state to vanilla's {@code entityNoOutline}: same shader, translucent blending, no culling, lightmap,
  * overlay, colour-only writes. Only {@code sortOnUpload} differs. Flip {@link #SORT_CLOAK_PASSES} to put the sort back

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "avp_predator:block/village_red_glyph_2"
+    },
+    "facing=east": {
+      "model": "avp_predator:block/village_red_glyph_2",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "avp_predator:block/village_red_glyph_2",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "avp_predator:block/village_red_glyph_2",
+      "y": 270
+    }
+  }
+}

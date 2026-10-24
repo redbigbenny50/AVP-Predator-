@@ -1545,48 +1545,81 @@ public final class PredatorCloakRendering {
 
             // A single FIXED vanilla type — its builder is always available, so this is safe in the level pass
             // and the immediate-source previews alike, with no private lanes involved.
-            return new PackGhostVertexConsumer(delegate.getBuffer(RenderType.entityTranslucent(bodyTexture)));
+            return new PackGhostVertexConsumer(delegate, RenderType.entityTranslucent(bodyTexture));
         }
     }
 
     /** Forces every vertex to the pack-ghost alpha; geometry, UVs and lighting pass through untouched. */
-    private record PackGhostVertexConsumer(
-        VertexConsumer delegate
-    ) implements VertexConsumer {
+    /**
+     * Oct 9 - RE-ASKS FOR ITS BUFFER AT EVERY VERTEX instead of holding one.
+     * <p>
+     * [tester log] "Iris classification pass failed: Rendering entity in world" over and over, and Xaero's minimap
+     * failing on the same entity, both with {@code IllegalStateException: Not building!} thrown from this class. It
+     * used to fetch the ghost's translucent buffer ONCE, when the model asked for its own buffer, and keep writing into
+     * it. But an immediate buffer source (the classification pass, a minimap's icon tracer, an inventory preview) has
+     * one shared builder: the moment anything asks it for a different render type, the previous builder is finished and
+     * closed - and the held one then throws on the next vertex. Asking the source again at the start of each vertex
+     * always returns the builder that is open for this type (it is the same one while nothing else intervenes), so the
+     * cloak can no longer crash another renderer's pass. Only cloaked entities under a shader pack take this path, so
+     * the extra lookup per vertex costs nothing anywhere else.
+     */
+    private static final class PackGhostVertexConsumer implements VertexConsumer {
+
+        private final MultiBufferSource source;
+
+        private final RenderType renderType;
+
+        private VertexConsumer current;
+
+        private PackGhostVertexConsumer(MultiBufferSource source, RenderType renderType) {
+            this.source = source;
+            this.renderType = renderType;
+        }
 
         @Override
         public VertexConsumer addVertex(float x, float y, float z) {
-            delegate.addVertex(x, y, z);
+            current = source.getBuffer(renderType);
+            current.addVertex(x, y, z);
             return this;
         }
 
         @Override
         public VertexConsumer setColor(int red, int green, int blue, int alpha) {
-            delegate.setColor(red, green, blue, Math.max(1, Math.round(PACK_GHOST_ALPHA * effectIntensityForCurrentEntity)));
+            if (current != null) {
+                current.setColor(red, green, blue, Math.max(1, Math.round(PACK_GHOST_ALPHA * effectIntensityForCurrentEntity)));
+            }
             return this;
         }
 
         @Override
         public VertexConsumer setUv(float u, float v) {
-            delegate.setUv(u, v);
+            if (current != null) {
+                current.setUv(u, v);
+            }
             return this;
         }
 
         @Override
         public VertexConsumer setUv1(int u, int v) {
-            delegate.setUv1(u, v);
+            if (current != null) {
+                current.setUv1(u, v);
+            }
             return this;
         }
 
         @Override
         public VertexConsumer setUv2(int u, int v) {
-            delegate.setUv2(u, v);
+            if (current != null) {
+                current.setUv2(u, v);
+            }
             return this;
         }
 
         @Override
         public VertexConsumer setNormal(float x, float y, float z) {
-            delegate.setNormal(x, y, z);
+            if (current != null) {
+                current.setNormal(x, y, z);
+            }
             return this;
         }
     }

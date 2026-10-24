@@ -16,6 +16,12 @@ public class PredatorCommands {
         REGISTRY.register(
             LiteralArgumentBuilder.<CommandSourceStack>literal(Predator.MOD.id())
                 .then(com.predator.common.command.PredatorHonorCommand.create())
+                // Oct 16: admin control over the hunts - ops only, not a debug tool.
+                .then(
+                    Commands.literal("hunt")
+                        .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .then(com.predator.common.command.PredatorHuntExemptCommand.create())
+                )
                 .then(
                     Commands.literal("debug")
                         .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))

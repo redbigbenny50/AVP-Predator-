@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "avp_predator:block/village_red_brick_slab"
+    },
+    "type=double": {
+      "model": "avp_predator:block/village_red_bricks"
+    },
+    "type=top": {
+      "model": "avp_predator:block/village_red_brick_slab_top"
+    }
+  }
+}

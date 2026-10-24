@@ -1,0 +1,27 @@
+{
+  "parent": "avp_predator:hunt/root",
+  "criteria": {
+    "code": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "icon": {
+      "count": 1,
+      "id": "avp_predator:veritanium_shard"
+    },
+    "title": {
+      "translate": "advancements.avp_predator.hunt.hunts_desire.title"
+    },
+    "description": {
+      "translate": "advancements.avp_predator.hunt.hunts_desire.description"
+    },
+    "frame": "challenge"
+  },
+  "requirements": [
+    [
+      "code"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

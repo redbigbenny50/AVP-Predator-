@@ -69,6 +69,9 @@ public class PredatorClient {
         registerBlockEntityRenderers();
         registerEntityRenderers();
 
+        // ReMorphed / Walkers: animate a player morphed into a yautja. Does nothing without Walkers.
+        com.predator.compatibility.walkers.client.WalkersShapeAnimations.register();
+
         // [stated] "use the normal potion texture with the hex code of the predator blood color": vanilla's potion
         // model, its liquid layer (layer 0) tinted bright green, #20FF20, chosen against Metamorphosis's #8BF200 so
         // the two read apart. The bottle layer (1) is left as it is.

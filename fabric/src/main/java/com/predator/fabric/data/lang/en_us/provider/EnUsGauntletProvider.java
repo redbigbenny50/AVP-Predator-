@@ -34,6 +34,11 @@ public final class EnUsGauntletProvider {
         // ⚠ The SAME key and text avp_alien writes for this rule — it is shared between the two mods, so whichever lang
         // file wins, the screen reads the same.
         builder.add("gamerule.gunBalancing", "Gun Mod Balancing");
+        builder.add("gamerule.disableYautjaHunts", "Disable yautja hunts");
+        builder.add(
+            "gamerule.disableYautjaHunts.description",
+            "Stops the Hunter's Moon hunts entirely. Any hunt in progress ends, and its Hunter leaves. Honor still builds."
+        );
         builder.add(
             "gamerule.gunBalancing.description",
             "Scales TACZ and Point Blank damage against xenomorphs and yautja to match AVP: Human's guns. Turn off for their full, unmodified damage."

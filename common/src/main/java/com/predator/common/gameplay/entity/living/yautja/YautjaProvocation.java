@@ -27,9 +27,13 @@ public final class YautjaProvocation {
     /** Further than this and the provoker has escaped. */
     public static final double ESCAPE_DISTANCE = 64.0;
 
+    /**
+     * Oct 16: each grudge carries its own escape distance - 64 for a strike, 128 for being aimed at (YautjaAimSense).
+     */
     private record Grudge(
         UUID player,
-        long until
+        long until,
+        double escapeDistance
     ) {}
 
     /** Server thread only; entries die with the yautja. */
@@ -39,7 +43,16 @@ public final class YautjaProvocation {
 
     /** Records (or refreshes) a strike by a player. */
     public static void struckBy(Yautja yautja, Player player) {
-        GRUDGES.put(yautja, new Grudge(player.getUUID(), yautja.level().getGameTime() + PROVOKED_TICKS));
+        GRUDGES.put(yautja, new Grudge(player.getUUID(), yautja.level().getGameTime() + PROVOKED_TICKS, ESCAPE_DISTANCE));
+    }
+
+    /**
+     * Oct 16: records (or refreshes) a player who held a weapon on it long enough to be noticed. Same 60 s as a strike,
+     * but the escape distance is {@code escapeDistance} - a sniper picked it out from far beyond 64 blocks, and must
+     * not have "escaped" the moment it noticed him. See YautjaAimSense.
+     */
+    public static void aimedAtBy(Yautja yautja, Player player, double escapeDistance) {
+        GRUDGES.put(yautja, new Grudge(player.getUUID(), yautja.level().getGameTime() + PROVOKED_TICKS, escapeDistance));
     }
 
     /** {@return whether this player struck the yautja recently enough, and is still near enough, to be hunted} */
@@ -50,7 +63,10 @@ public final class YautjaProvocation {
             return false;
         }
 
-        if (yautja.level().getGameTime() > grudge.until() || yautja.distanceToSqr(player) > ESCAPE_DISTANCE * ESCAPE_DISTANCE) {
+        if (
+            yautja.level().getGameTime() > grudge.until()
+                || yautja.distanceToSqr(player) > grudge.escapeDistance() * grudge.escapeDistance()
+        ) {
             GRUDGES.remove(yautja);
             return false;
         }

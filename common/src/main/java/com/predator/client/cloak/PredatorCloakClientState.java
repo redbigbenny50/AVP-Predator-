@@ -17,6 +17,15 @@ public final class PredatorCloakClientState {
 
     private static final Set<Integer> CLOAKED = ConcurrentHashMap.newKeySet();
 
+    /**
+     * Oct 10 - WHICH ENTITY each cloaked id belonged to. Network ids are reused, and a cloaked mob that died or left
+     * tracking range never gets an "uncloaked" packet, so its id stayed in {@link #CLOAKED} - and the next entity the
+     * client was handed that id rendered as a cloak shimmer (and kept the cloak's screen copy running for nothing).
+     * Same flaw as the capture chain drawn to a stranger in avp_alien. The UUID is bound the first time the id is
+     * resolved and a mismatch drops the entry.
+     */
+    private static final java.util.Map<Integer, java.util.UUID> OWNER = new ConcurrentHashMap<>();
+
     private PredatorCloakClientState() {
         throw new UnsupportedOperationException();
     }
@@ -29,13 +38,35 @@ public final class PredatorCloakClientState {
     public static void set(int entityId, boolean cloaked) {
         if (cloaked) {
             CLOAKED.add(entityId);
+            var level = Minecraft.getInstance().level;
+            var entity = level == null ? null : level.getEntity(entityId);
+
+            if (entity != null) {
+                OWNER.put(entityId, entity.getUUID());
+            } else {
+                OWNER.remove(entityId); // bound on first sight
+            }
         } else {
             CLOAKED.remove(entityId);
+            OWNER.remove(entityId);
         }
     }
 
     public static boolean isCloaked(LivingEntity entity) {
-        return !CLOAKED.isEmpty() && CLOAKED.contains(entity.getId());
+        if (CLOAKED.isEmpty() || !CLOAKED.contains(entity.getId())) {
+            return false;
+        }
+
+        var owner = OWNER.putIfAbsent(entity.getId(), entity.getUUID());
+
+        if (owner != null && !owner.equals(entity.getUUID())) {
+            // The id now belongs to someone else: the cloak it recorded is long gone.
+            CLOAKED.remove(entity.getId());
+            OWNER.remove(entity.getId());
+            return false;
+        }
+
+        return true;
     }
 
     /** Dropped on world change — ids are only meaningful within one level. */
@@ -46,6 +77,7 @@ public final class PredatorCloakClientState {
 
     public static void clear() {
         CLOAKED.clear();
+        OWNER.clear();
     }
 
     /**
