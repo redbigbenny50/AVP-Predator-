@@ -35,6 +35,9 @@ public class PredatorNeoForge {
 
         Predator.initialize();
         NeoForge.EVENT_BUS.addListener(PredatorNeoForge::onRightClickBlock);
+
+        // Oct 24 - the music disc fragments in ancient city and dungeon chests (PredatorNeoForgeLoot).
+        com.predator.neoforge.loot.PredatorNeoForgeLoot.register();
     }
 
     private static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {

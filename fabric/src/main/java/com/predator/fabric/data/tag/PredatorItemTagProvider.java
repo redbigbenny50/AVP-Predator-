@@ -140,7 +140,7 @@ public class PredatorItemTagProvider extends FabricTagProvider.ItemTagProvider {
         // which handed the click to the gauntlet and fired a net out of it.
         // ⚠ THE WHIP IS NO LONGER HERE. It blocked the gauntlet's right click because it used to grapple on one;
         // now that the grapple IS the gauntlet's, the whip must let that click through.
-        // Items a yautja can heal with. ⚠ ITEMS ONLY: the Healing II and Regeneration II potions it also counts are
+        // Items a yautja can heal with. ⚠ ITEMS ONLY: the Healing II potion it also counts is
         // recognised by potion TYPE in Yautja.isHealingItem, because every potion is the same item, minecraft:potion,
         // and tagging that would make water bottles and poison count too.
         getOrCreateTagBuilder(PredatorItemTags.YAUTJA_HEALING_ITEMS)

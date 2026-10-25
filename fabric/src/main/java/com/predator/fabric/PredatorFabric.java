@@ -13,6 +13,16 @@ public class PredatorFabric implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        // Oct 24 - the music disc fragments in ancient city and dungeon chests (PredatorVanillaLoot, both loaders).
+        net.fabricmc.fabric.api.loot.v3.LootTableEvents.MODIFY.register((key, builder, source, provider) -> {
+            if (!source.isBuiltin()) {
+                return;
+            }
+            for (var pool : com.predator.common.data.loot.PredatorVanillaLoot.extraPools(key)) {
+                builder.withPool(pool);
+            }
+        });
+
         // ⚠⚠ THE MenuType IS BUILT HERE, NOT IN :common. Its constructor is private in vanilla and its
         // MenuSupplier is package-private, and the common module compiles against UNPATCHED vanilla — an access
         // widener or transformer declared by this mod does not reach it. Proven the hard way: both files were

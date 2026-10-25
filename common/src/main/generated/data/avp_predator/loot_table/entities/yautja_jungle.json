@@ -46,12 +46,69 @@
         },
         {
           "type": "minecraft:item",
+          "name": "avp_predator:battleaxe",
+          "weight": 6
+        },
+        {
+          "type": "minecraft:item",
+          "name": "avp_predator:veritanium_bow",
+          "weight": 6
+        },
+        {
+          "type": "minecraft:item",
+          "name": "avp_predator:smart_disc",
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
           "name": "avp_predator:combi_stick",
           "weight": 3
         },
         {
-          "type": "minecraft:empty",
-          "weight": 37
+          "type": "minecraft:item",
+          "name": "avp_predator:plasma_sword",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "avp_predator:plasma_bow",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "avp_predator:chain_whip",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "conditions": [
+            {
+              "condition": "minecraft:all_of",
+              "terms": [
+                {
+                  "condition": "minecraft:inverted",
+                  "term": {
+                    "condition": "minecraft:entity_properties",
+                    "entity": "this",
+                    "predicate": {
+                      "nbt": "{Tier:\"unblooded\"}"
+                    }
+                  }
+                },
+                {
+                  "condition": "minecraft:inverted",
+                  "term": {
+                    "condition": "minecraft:entity_properties",
+                    "entity": "this",
+                    "predicate": {
+                      "nbt": "{Tier:\"youngblood\"}"
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "name": "avp_predator:hand_caster"
         }
       ],
       "rolls": 1.0
@@ -106,8 +163,38 @@
           "name": "avp_predator:veritanium_arrow"
         },
         {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 4.0,
+                "min": 2.0
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "avp_predator:shuriken"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 2.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "avp_predator:plasma_shuriken"
+        },
+        {
           "type": "minecraft:empty",
-          "weight": 2
+          "weight": 3
         }
       ],
       "rolls": 1.0

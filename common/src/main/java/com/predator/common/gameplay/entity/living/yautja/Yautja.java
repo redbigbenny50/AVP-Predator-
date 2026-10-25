@@ -725,11 +725,13 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
      * {@return whether a yautja can heal itself with this stack}
      * <p>
      * [stated] "add healthpotion II, enchanted golden apple, regeneration 2 potion to the yautja healing items."
+     * [stated] Oct 24 - "lets remove regen items from the pred healing items": the Regeneration II potion is no longer
+     * one. Healing II and the enchanted golden apple remain.
      * <p>
      * ⚠⚠ THE POTIONS CANNOT LIVE IN THE TAG. Every potion in the game is the SAME item, minecraft:potion; which potion
      * it is lives in its POTION_CONTENTS data. Tagging minecraft:potion would make a water bottle or a Potion of Poison
      * count as healing. So the tag (PredatorItemTags.YAUTJA_HEALING_ITEMS) holds real items — the enchanted golden
-     * apple — and the two potions are recognised here by TYPE: Healing II and Regeneration II, drinkable only.
+     * apple — and the potion is recognised here by TYPE: Healing II, drinkable only.
      * <p>
      * ⚠ The Potions constants are read HERE, when the check runs, never held in a static field: vanilla's Potions
      * registers itself the first time it is touched, and a static reference on this class could trigger that during mod
@@ -746,9 +748,7 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
 
         var contents = stack.get(net.minecraft.core.component.DataComponents.POTION_CONTENTS);
 
-        return contents != null
-            && (contents.is(net.minecraft.world.item.alchemy.Potions.STRONG_HEALING)
-                || contents.is(net.minecraft.world.item.alchemy.Potions.STRONG_REGENERATION));
+        return contents != null && contents.is(net.minecraft.world.item.alchemy.Potions.STRONG_HEALING);
     }
 
     /**
@@ -2898,10 +2898,10 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
     /**
      * ReMorphed / Walkers: drives a MORPH COPY of this yautja from the player wearing it.
      * <p>
-     * [stated] Oct 23 - morphs into our models did not animate. Walkers keeps a client-side copy of the mob and draws
-     * it on the player, but it never TICKS that copy - and a yautja chooses its walk, run, jump and land clips inside
-     * its own client tick (YautjaBodyState, from how far it moved since the last tick). So the copy chose nothing and
-     * slid along in whatever pose it started in.
+     * [stated] Oct 23 - morphs into our models did not animate. Walkers keeps a client-side copy of the mob and draws it
+     * on the player, but it never TICKS that copy - and a yautja chooses its walk, run, jump and land clips inside its
+     * own client tick (YautjaBodyState, from how far it moved since the last tick). So the copy chose nothing and slid
+     * along in whatever pose it started in.
      * </p>
      * <p>
      * Called by {@code WalkersShapeAnimations} every frame Walkers draws the copy; only the frames that open a NEW
@@ -3270,15 +3270,12 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
     }
 
     private java.util.List<ItemStack> healingLoadout() {
-        return switch (random.nextInt(3)) {
+        // [stated] Oct 24 - no regeneration potions any more: golden apples or Healing II, half and half.
+        return switch (random.nextInt(2)) {
             case 0 -> java.util.List.of(new ItemStack(net.minecraft.world.item.Items.ENCHANTED_GOLDEN_APPLE, 2));
-            case 1 -> java.util.List.of(
+            default -> java.util.List.of(
                 potion(net.minecraft.world.item.alchemy.Potions.STRONG_HEALING),
                 potion(net.minecraft.world.item.alchemy.Potions.STRONG_HEALING)
-            );
-            default -> java.util.List.of(
-                potion(net.minecraft.world.item.alchemy.Potions.STRONG_REGENERATION),
-                potion(net.minecraft.world.item.alchemy.Potions.STRONG_REGENERATION)
             );
         };
     }

@@ -28,7 +28,6 @@ import net.minecraft.world.item.Items;
  * restores the same SHARE of the yautja's health it gives a player. Read from the 1.21.1 jar:
  * <ul>
  * <li>Healing II — instant heal 8 of 20 = <b>40%</b>, at once.</li>
- * <li>Regeneration II potion — 450 ticks at 1 per 25 = 18 of 20 = <b>90%</b>, over 22.5 s.</li>
  * <li>Enchanted golden apple — Regeneration II 400 ticks = 16 of 20 = <b>80%</b> over 20 s; Absorption IV 2400 ticks =
  * 16 of 20 = <b>80%</b> absorption for 2 minutes; plus Resistance I and Fire Resistance for 5 minutes each, which are
  * not health-based and are applied exactly as vanilla gives them.</li>
@@ -45,10 +44,6 @@ public final class YautjaHealing {
     public static final float HEAL_BELOW = 0.5F;
 
     private static final float HEALING_II_SHARE = 8.0F / 20.0F;
-
-    private static final float REGEN_POTION_SHARE = 18.0F / 20.0F;
-
-    private static final int REGEN_POTION_TICKS = 450;
 
     private static final float APPLE_REGEN_SHARE = 16.0F / 20.0F;
 
@@ -119,13 +114,9 @@ public final class YautjaHealing {
                 0.05D
             );
         } else {
-            var contents = used.get(net.minecraft.core.component.DataComponents.POTION_CONTENTS);
-
-            if (contents != null && contents.is(net.minecraft.world.item.alchemy.Potions.STRONG_HEALING)) {
-                yautja.heal(max * HEALING_II_SHARE);
-            } else {
-                yautja.startRegeneration(max * REGEN_POTION_SHARE, REGEN_POTION_TICKS);
-            }
+            // [stated] Oct 24 - regeneration potions are no longer healing items (Yautja.isHealingItem), so the only
+            // potion that reaches here is Healing II.
+            yautja.heal(max * HEALING_II_SHARE);
 
             level.playSound(null, yautja.blockPosition(), SoundEvents.GENERIC_DRINK, yautja.getSoundSource(), 1.0F, 0.8F);
         }

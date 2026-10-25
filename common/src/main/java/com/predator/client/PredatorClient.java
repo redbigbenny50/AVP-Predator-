@@ -61,6 +61,9 @@ public class PredatorClient {
     public static final java.util.List<Runnable> LOADER_CLIENT_SETUP = new java.util.ArrayList<>();
 
     public static void initialize() {
+        // Oct 24 - drops on BLib's shared JEI, REI and EMI tabs.
+        com.predator.client.compat.PredatorViewers.register();
+
         MOD.initialize(PredatorClient::runInitialization);
     }
 

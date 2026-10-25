@@ -85,6 +85,14 @@ public class YautjaPredicates {
                     yield true;
                 }
 
+                // Oct 24 - [stated] option 1: villagers are NEVER worthy prey on sight, armed or not. Villager Retaliation
+                // (and any mod like it) puts swords and crossbows in villagers' hands, which met the armed-mob rule below
+                // and turned whole villages into hunting grounds. A villager or wandering trader is fought only when it
+                // has struck the yautja - the facehugger's self-defence rule. AbstractVillager covers both, from any mod.
+                if (potentialTarget instanceof net.minecraft.world.entity.npc.AbstractVillager) {
+                    yield yautja.getLastAttacker() != null && yautja.getLastAttacker().is(potentialTarget);
+                }
+
                 if (potentialTarget instanceof Mob || potentialTarget instanceof Monster) {
                     yield potentialTarget.getMainHandItem().is(PredatorItemTags.HOSTILE_WEAPONS)
                         || (yautja.getLastAttacker() != null && yautja.getLastAttacker().is(potentialTarget));
