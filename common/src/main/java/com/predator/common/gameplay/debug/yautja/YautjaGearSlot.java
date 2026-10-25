@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * [stated] "yes the rack should have a white list too. the weapons, the ammo it uses, and the healing items". Accepts
  * avp_predator:yautja_rack_items (its weapons and ammunition) OR anything Yautja.isHealingItem recognises (the golden
- * apple tag and the Healing II potion — potions a tag cannot tell apart), and never anything in
+ * healing tag, empty unless a data pack fills it, and the Healing II potion — potions a tag cannot tell apart), and never anything in
  * yautja_forbidden (the hand caster). ⚠ The screen is the only way to hand a yautja an item: yautja never pick items up
  * off the ground. Shift-click goes through this too — vanilla's moveItemStackTo asks mayPlace.
  * <p>

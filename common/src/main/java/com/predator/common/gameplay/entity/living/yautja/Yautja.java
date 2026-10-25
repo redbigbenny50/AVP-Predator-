@@ -725,13 +725,14 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
      * {@return whether a yautja can heal itself with this stack}
      * <p>
      * [stated] "add healthpotion II, enchanted golden apple, regeneration 2 potion to the yautja healing items."
-     * [stated] Oct 24 - "lets remove regen items from the pred healing items": the Regeneration II potion is no longer
-     * one. Healing II and the enchanted golden apple remain.
+     * [stated] Oct 24 - "lets remove regen items from the pred healing items", and Oct 25 - "you kept the golden
+     * apples remove those too please": neither the Regeneration II potion nor the enchanted golden apple is one now.
+     * Healing II is the only healing item (plus anything a data pack adds to the healing tag).
      * <p>
      * ⚠⚠ THE POTIONS CANNOT LIVE IN THE TAG. Every potion in the game is the SAME item, minecraft:potion; which potion
      * it is lives in its POTION_CONTENTS data. Tagging minecraft:potion would make a water bottle or a Potion of Poison
      * count as healing. So the tag (PredatorItemTags.YAUTJA_HEALING_ITEMS) holds real items — the enchanted golden
-     * apple — and the potion is recognised here by TYPE: Healing II, drinkable only.
+     * apple, now empty — and the potion is recognised here by TYPE: Healing II, drinkable only.
      * <p>
      * ⚠ The Potions constants are read HERE, when the check runs, never held in a static field: vanilla's Potions
      * registers itself the first time it is touched, and a static reference on this class could trigger that during mod
@@ -3270,14 +3271,11 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
     }
 
     private java.util.List<ItemStack> healingLoadout() {
-        // [stated] Oct 24 - no regeneration potions any more: golden apples or Healing II, half and half.
-        return switch (random.nextInt(2)) {
-            case 0 -> java.util.List.of(new ItemStack(net.minecraft.world.item.Items.ENCHANTED_GOLDEN_APPLE, 2));
-            default -> java.util.List.of(
-                potion(net.minecraft.world.item.alchemy.Potions.STRONG_HEALING),
-                potion(net.minecraft.world.item.alchemy.Potions.STRONG_HEALING)
-            );
-        };
+        // [stated] Oct 24/25 - no regeneration items of any kind: every yautja carries two Healing II potions.
+        return java.util.List.of(
+            potion(net.minecraft.world.item.alchemy.Potions.STRONG_HEALING),
+            potion(net.minecraft.world.item.alchemy.Potions.STRONG_HEALING)
+        );
     }
 
     private static ItemStack potion(net.minecraft.core.Holder<net.minecraft.world.item.alchemy.Potion> type) {

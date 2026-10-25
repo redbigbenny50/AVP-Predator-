@@ -143,8 +143,9 @@ public class PredatorItemTagProvider extends FabricTagProvider.ItemTagProvider {
         // Items a yautja can heal with. ⚠ ITEMS ONLY: the Healing II potion it also counts is
         // recognised by potion TYPE in Yautja.isHealingItem, because every potion is the same item, minecraft:potion,
         // and tagging that would make water bottles and poison count too.
-        getOrCreateTagBuilder(PredatorItemTags.YAUTJA_HEALING_ITEMS)
-            .add(Items.ENCHANTED_GOLDEN_APPLE);
+        // [stated] Oct 25 - the enchanted golden apple is no longer one (it heals by regeneration). The tag stays, EMPTY,
+        // so data packs can still add items.
+        getOrCreateTagBuilder(PredatorItemTags.YAUTJA_HEALING_ITEMS);
 
         // [stated] "only predator armor is valid in the slot" — what the yautja screen's armour slots accept.
         getOrCreateTagBuilder(PredatorItemTags.YAUTJA_ARMOR)
