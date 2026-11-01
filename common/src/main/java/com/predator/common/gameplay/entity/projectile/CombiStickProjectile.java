@@ -85,43 +85,83 @@ public class CombiStickProjectile extends AbstractArrow {
         return getOwner() == player && super.tryPickup(player);
     }
 
-    @Override
-    protected void onHitEntity(@NotNull EntityHitResult result) {
-        // [stated] "the throw would be just like a trident" — and a trident hits FLAT, not by speed. This hit for ~22
-        // at
-        // Youngblood and ~44 at Clan Leader, and a player's full-power throw for ~30. It is now exactly DAMAGE, scaled
-        // by the thrower's tier for a yautja. See hitFlat.
-        hitFlat(result);
-
-        if (!level().isClientSide) {
-            playSound(SoundEvents.TRIDENT_HIT, 1.0F, 1.0F);
-        }
-    }
+    /**
+     * Set once the spear has hit something. Like a trident it then cannot hit again until it is picked up - it bounces
+     * off and falls instead of passing through.
+     */
+    private boolean dealtDamage;
 
     /**
-     * Makes vanilla's arrow hit deal exactly {@code getBaseDamage()}, flat.
-     * <p>
-     * 🚨🚨 VANILLA MULTIPLIES AN ARROW'S DAMAGE BY ITS SPEED — AbstractArrow.onHitEntity deals ceil(speed x base). So a
-     * "base" of 6 flying at 3.2 hit for ~20, and every number set on this projectile was silently ~2-3x what was meant.
-     * Setting the base to (intended / current speed) for the duration of the hit makes that product come out to exactly
-     * the intended damage, whatever the projectile has slowed to — then the real base is put back.
-     * <p>
-     * ⚠ The random crit-arrow bonus vanilla adds on top (up to half the damage again, plus two) is suppressed for the
-     * hit too, so the number is the number.
+     * 🚨 Oct 29 BUG FIX: thrown at an enemy, the combi stick DISAPPEARED. It used AbstractArrow's entity hit, and
+     * AbstractArrow.onHitEntity discards the projectile after a successful hit whenever its pierce level is 0 - an
+     * arrow is used up when it lands in a mob. A trident overrides the whole hit instead: it deals its damage, then
+     * bounces back off the target ({@code deltaMovement * (-0.01, -0.1, -0.01)}) and drops to the ground to be picked
+     * up. This now does exactly what ThrownTrident.onHitEntity does (read from the 1.21.1 source), with the spear's own
+     * flat damage, still scaled by a yautja thrower's tier.
      */
-    private void hitFlat(EntityHitResult result) {
-        var intended = getBaseDamage();
-        var speed = getDeltaMovement().length();
-        var crit = isCritArrow();
+    @Override
+    protected void onHitEntity(@NotNull EntityHitResult result) {
+        var entity = result.getEntity();
+        var owner = getOwner();
+        var source = damageSources().trident(this, owner == null ? this : owner);
+        var damage = (float) getBaseDamage();
 
-        setBaseDamage(speed > 1.0E-3D ? intended / speed : intended);
-        setCritArrow(false);
-
-        try {
-            super.onHitEntity(result);
-        } finally {
-            setBaseDamage(intended);
-            setCritArrow(crit);
+        if (level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            damage = net.minecraft.world.item.enchantment.EnchantmentHelper.modifyDamage(
+                serverLevel,
+                getWeaponItem(),
+                entity,
+                source,
+                damage
+            );
         }
+
+        dealtDamage = true;
+
+        if (entity.hurt(source, damage)) {
+            if (entity.getType() == net.minecraft.world.entity.EntityType.ENDERMAN) {
+                return;
+            }
+
+            if (level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                net.minecraft.world.item.enchantment.EnchantmentHelper.doPostAttackEffectsWithItemSource(
+                    serverLevel,
+                    entity,
+                    source,
+                    getWeaponItem()
+                );
+            }
+
+            if (entity instanceof LivingEntity living) {
+                doKnockback(living, source);
+                doPostHurtEffects(living);
+            }
+        }
+
+        // Bounce back off the target and fall - it stays in the world to be picked up.
+        setDeltaMovement(getDeltaMovement().multiply(-0.01D, -0.1D, -0.01D));
+        playSound(SoundEvents.TRIDENT_HIT, 1.0F, 1.0F);
     }
+
+    /** Once it has hit something it cannot hit again - it is falling, not flying. Same as the trident. */
+    @Override
+    protected @org.jetbrains.annotations.Nullable EntityHitResult findHitEntity(
+        @NotNull net.minecraft.world.phys.Vec3 startVec,
+        @NotNull net.minecraft.world.phys.Vec3 endVec
+    ) {
+        return dealtDamage ? null : super.findHitEntity(startVec, endVec);
+    }
+
+    @Override
+    public void addAdditionalSaveData(@NotNull net.minecraft.nbt.CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putBoolean("DealtDamage", dealtDamage);
+    }
+
+    @Override
+    public void readAdditionalSaveData(@NotNull net.minecraft.nbt.CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        dealtDamage = tag.getBoolean("DealtDamage");
+    }
+
 }

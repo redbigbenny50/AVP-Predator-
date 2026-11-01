@@ -725,9 +725,9 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
      * {@return whether a yautja can heal itself with this stack}
      * <p>
      * [stated] "add healthpotion II, enchanted golden apple, regeneration 2 potion to the yautja healing items."
-     * [stated] Oct 24 - "lets remove regen items from the pred healing items", and Oct 25 - "you kept the golden
-     * apples remove those too please": neither the Regeneration II potion nor the enchanted golden apple is one now.
-     * Healing II is the only healing item (plus anything a data pack adds to the healing tag).
+     * [stated] Oct 24 - "lets remove regen items from the pred healing items", and Oct 25 - "you kept the golden apples
+     * remove those too please": neither the Regeneration II potion nor the enchanted golden apple is one now. Healing
+     * II is the only healing item (plus anything a data pack adds to the healing tag).
      * <p>
      * ⚠⚠ THE POTIONS CANNOT LIVE IN THE TAG. Every potion in the game is the SAME item, minecraft:potion; which potion
      * it is lives in its POTION_CONTENTS data. Tagging minecraft:potion would make a water bottle or a Potion of Poison
@@ -1429,6 +1429,13 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
         var tier = getTier();
         var hunter = isHunter();
         var defence = huntDefenceScale();
+
+        // [stated] Oct 30: a plasma caster bolt "bypasses 80% armor and ignores toughness" - a yautja's tier armour
+        // too.
+        // This override replaces LivingEntity's, so MixinLivingEntity_PlasmaArmor never reaches a yautja.
+        if (source.getDirectEntity() instanceof com.predator.common.gameplay.entity.projectile.PlasmaBoltProjectile) {
+            return CombatRules.getDamageAfterAbsorb(this, amount, source, (float) (tier.armor(hunter) * defence) * 0.2F, 0.0F);
+        }
 
         return CombatRules.getDamageAfterAbsorb(
             this,
@@ -2899,10 +2906,10 @@ public class Yautja extends Monster implements DataUser, GOAPUser<Yautja>, PathN
     /**
      * ReMorphed / Walkers: drives a MORPH COPY of this yautja from the player wearing it.
      * <p>
-     * [stated] Oct 23 - morphs into our models did not animate. Walkers keeps a client-side copy of the mob and draws it
-     * on the player, but it never TICKS that copy - and a yautja chooses its walk, run, jump and land clips inside its
-     * own client tick (YautjaBodyState, from how far it moved since the last tick). So the copy chose nothing and slid
-     * along in whatever pose it started in.
+     * [stated] Oct 23 - morphs into our models did not animate. Walkers keeps a client-side copy of the mob and draws
+     * it on the player, but it never TICKS that copy - and a yautja chooses its walk, run, jump and land clips inside
+     * its own client tick (YautjaBodyState, from how far it moved since the last tick). So the copy chose nothing and
+     * slid along in whatever pose it started in.
      * </p>
      * <p>
      * Called by {@code WalkersShapeAnimations} every frame Walkers draws the copy; only the frames that open a NEW

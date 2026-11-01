@@ -119,7 +119,16 @@ public abstract class MixinLivingEntityRenderer_VisionPerBoneLight {
 
         var visibleMode = PredatorVisionClassification.visibleMode(entity);
         var hotTag = visibleMode != null ? visibleMode.hotTag() : null;
-        var blockLightFloor = (hotTag != null && entity.getType().is(hotTag)) ? 14 : 7;
+        var hot = hotTag != null && entity.getType().is(hotTag);
+        var blockLightFloor = hot ? 14 : 7;
+
+        // avp_human's Cold-Blooded gene: the creature reads cooler - down to half as bright as its kind at 100%. Read
+        // from avp_human's synced gene flags through BLib's registry, so this needs no avp_human dependency (absent
+        // mod = no key = no change).
+        var coldBlooded = predator$coldBlooded(entity);
+        if (coldBlooded > 0) {
+            blockLightFloor = Math.max(1, blockLightFloor - (int) Math.round(blockLightFloor * 0.5 * coldBlooded));
+        }
 
         BLibPerBoneLightContext.push(mc.level, camera.getPosition(), blockLightFloor);
         frame[2] = 1;
@@ -168,5 +177,29 @@ public abstract class MixinLivingEntityRenderer_VisionPerBoneLight {
                 BLibPostEffectFramework.popBackgroundEntity();
             }
         }
+    }
+
+    @org.spongepowered.asm.mixin.Unique
+    private static com.blib.api.common.data_sync.v1.model.DataSyncKey<?> predator$geneFlagsKey;
+
+    @org.spongepowered.asm.mixin.Unique
+    private static boolean predator$geneFlagsLooked;
+
+    /** Cold-Blooded 0..1 from avp_human's packed gene flags (bits 0-6, percent), or 0 without avp_human. */
+    @org.spongepowered.asm.mixin.Unique
+    private static double predator$coldBlooded(LivingEntity entity) {
+        if (!predator$geneFlagsLooked) {
+            predator$geneFlagsLooked = true;
+            predator$geneFlagsKey = com.blib.api.common.registry.v1.BLibBuiltInRegistries.DATA_SYNC_KEYS.get(
+                net.minecraft.resources.ResourceLocation.parse("avp_human:entity_gene_flags")
+            );
+        }
+
+        if (predator$geneFlagsKey == null) {
+            return 0.0;
+        }
+
+        var value = ((com.blib.api.common.data_sync.v1.model.DataUser) entity).getDataContainer().get(predator$geneFlagsKey);
+        return value instanceof Integer flags ? (flags & 0x7F) / 100.0 : 0.0;
     }
 }

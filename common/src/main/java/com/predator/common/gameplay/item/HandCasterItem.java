@@ -161,7 +161,7 @@ public class HandCasterItem extends Item {
             return;
         }
 
-        fire(level, player, stack, Math.min(1.0F, (float) held / CHARGE_TICKS), tip);
+        fire(level, player, stack, Math.min(1.0F, (float) held / chargeTicks(stack, player)), tip);
     }
 
     /** Let go of the item, switched away, opened a screen: the charge is dropped, nothing fired or spent. */
@@ -226,6 +226,48 @@ public class HandCasterItem extends Item {
         level.playSound(null, player.blockPosition(), PredatorSoundEvents.HAND_CASTER_RELOAD.get(), SoundSource.PLAYERS, 0.9F, 1.0F);
     }
 
+    /**
+     * [stated] Oct 30: "Quickcharge enchantment reduces charge time." The full-charge time for this caster, through
+     * vanilla's own Quick Charge rule (0.25 s off per level, as on a crossbow): 2 s, then 1.75 / 1.5 / 1.25 s at I / II
+     * / III. Never below the minimum hold. Both sides read it - the server for the shot, the client for the sparks and
+     * the charge loop - so they always agree.
+     */
+    public static int chargeTicks(ItemStack stack, net.minecraft.world.entity.LivingEntity holder) {
+        var seconds = net.minecraft.world.item.enchantment.EnchantmentHelper.modifyCrossbowChargingTime(
+            stack,
+            holder,
+            CHARGE_TICKS / 20.0F
+        );
+        return Math.max(MIN_CHARGE_TICKS, Math.round(seconds * 20.0F));
+    }
+
+    private static int enchantmentLevel(
+        ServerLevel level,
+        ItemStack stack,
+        net.minecraft.resources.ResourceKey<net.minecraft.world.item.enchantment.Enchantment> key
+    ) {
+        return level.registryAccess()
+            .lookup(net.minecraft.core.registries.Registries.ENCHANTMENT)
+            .flatMap(registry -> registry.get(key))
+            .map(holder -> net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(holder, stack))
+            .orElse(0);
+    }
+
+    /**
+     * [stated] Oct 30: "Allow it to be enchanted ... no Infiniti or mending." Enchantable like a bow (it is in the
+     * bow-enchantable tag: Power, Punch, Flame) plus Quick Charge; Infinity is refused and Quick Charge allowed by
+     * MixinEnchantment_HandCasterEnchantments, and Mending never applies - the caster has no durability.
+     */
+    @Override
+    public boolean isEnchantable(@org.jetbrains.annotations.NotNull ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    public int getEnchantmentValue() {
+        return 1;
+    }
+
     private static void fire(
         ServerLevel level,
         Player player,
@@ -238,7 +280,13 @@ public class HandCasterItem extends Item {
 
         // [stated] "same bolt" — the caster's bolt and speed. Damage scales with the charge: half at the shortest hold,
         // the caster's full bolt at a full charge.
-        bolt.setDamageOverride(PlasmaCaster.BOLT_DAMAGE * (0.5F + 0.5F * charge));
+        // [stated] Oct 30: enchantable. Power adds 10% per level; Punch and Flame ride the bolt (PlasmaBoltProjectile).
+        var power = enchantmentLevel(level, stack, net.minecraft.world.item.enchantment.Enchantments.POWER);
+        bolt.setDamageOverride(PlasmaCaster.BOLT_DAMAGE * (0.5F + 0.5F * charge) * (1.0F + 0.1F * power));
+        bolt.setEnchantments(
+            enchantmentLevel(level, stack, net.minecraft.world.item.enchantment.Enchantments.PUNCH),
+            enchantmentLevel(level, stack, net.minecraft.world.item.enchantment.Enchantments.FLAME)
+        );
         // [stated] "a large explosion effect when it hits a mob and when it hits a block have it destroy 3/4 a tnt
         // explosion" — the hand caster's bolts only; the yautja's caster still never explodes.
         bolt.setExplosive(true);
@@ -395,7 +443,7 @@ public class HandCasterItem extends Item {
             return;
         }
 
-        var progress = Math.min(1.0F, (float) (level.getGameTime() - charge.startTick()) / CHARGE_TICKS);
+        var progress = Math.min(1.0F, (float) (level.getGameTime() - charge.startTick()) / chargeTicks(stack, player));
 
         sendChargeSparksToOthers(serverLevel, player, muzzlePosition(player), progress);
     }

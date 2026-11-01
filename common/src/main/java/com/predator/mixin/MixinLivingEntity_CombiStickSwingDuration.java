@@ -32,7 +32,8 @@ public abstract class MixinLivingEntity_CombiStickSwingDuration {
      * ⚠ 26 is vanilla's 6 plus one second, which is what he asked for. It is a LONG swing — if it feels ponderous, 16
      * to 20 is a middle ground. Not final, so it hot-swaps.
      */
-    private static int AVP_COMBI_SWING_TICKS = 26;
+    private static int AVP_COMBI_SWING_TICKS = 20; // [stated] Oct 29: "a little quicker" - was 26. Keep
+                                                   // CombiStickDelayedStrike in step.
 
     @Inject(method = "getCurrentSwingDuration", at = @At("RETURN"), cancellable = true)
     private void avp_predator$slowCombiStickSwing(CallbackInfoReturnable<Integer> callback) {

@@ -67,7 +67,11 @@ public final class CasterChargeLoopSounds {
         LOOPS.put(entityId, loop);
         // ⚠ Queued, not played: it begins once the charge sound has run its course. A released charge stops the
         // queued instance first, and canPlaySound then refuses it when its turn comes.
-        minecraft.getSoundManager().playDelayed(loop, HandCasterItem.CHARGE_TICKS);
+        // [stated] Oct 30 - Quick Charge shortens the charge, so the loop starts when THIS caster is full.
+        var delay = entity instanceof net.minecraft.world.entity.LivingEntity living
+            ? HandCasterItem.chargeTicks(living.getMainHandItem(), living)
+            : HandCasterItem.CHARGE_TICKS;
+        minecraft.getSoundManager().playDelayed(loop, delay);
     }
 
     private static final class Loop extends AbstractTickableSoundInstance {

@@ -143,7 +143,8 @@ public class PredatorItemTagProvider extends FabricTagProvider.ItemTagProvider {
         // Items a yautja can heal with. ⚠ ITEMS ONLY: the Healing II potion it also counts is
         // recognised by potion TYPE in Yautja.isHealingItem, because every potion is the same item, minecraft:potion,
         // and tagging that would make water bottles and poison count too.
-        // [stated] Oct 25 - the enchanted golden apple is no longer one (it heals by regeneration). The tag stays, EMPTY,
+        // [stated] Oct 25 - the enchanted golden apple is no longer one (it heals by regeneration). The tag stays,
+        // EMPTY,
         // so data packs can still add items.
         getOrCreateTagBuilder(PredatorItemTags.YAUTJA_HEALING_ITEMS);
 
@@ -176,7 +177,9 @@ public class PredatorItemTagProvider extends FabricTagProvider.ItemTagProvider {
         // accepts Infinity — which is harmless, since it already never consumes ammo.
         getOrCreateTagBuilder(ItemTags.BOW_ENCHANTABLE)
             .add(PredatorItems.VERITANIUM_BOW.get())
-            .add(PredatorItems.PLASMA_BOW.get());
+            .add(PredatorItems.PLASMA_BOW.get())
+            // [stated] Oct 30: the hand caster takes bow enchantments (Infinity refused separately).
+            .add(PredatorItems.HAND_CASTER.get());
 
         getOrCreateTagBuilder(ItemTags.DURABILITY_ENCHANTABLE).add(PredatorItems.VERITANIUM_BOW.get());
 

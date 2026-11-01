@@ -27,10 +27,10 @@ public final class CombiStickDelayedStrike {
      * ⚠ Must equal AVP_COMBI_SWING_TICKS * AVP_THRUST_END from the render mixins (26 * 0.24). If the swing length or
      * the thrust window changes, this has to move with them or the hit drifts off the point again.
      */
-    public static final int STRIKE_DELAY_TICKS = 6;
+    public static final int STRIKE_DELAY_TICKS = 5; // Oct 29: 20 * 0.24 = 4.8, rounded - was 6 at the 26-tick swing.
 
     /** ⚠ Must equal AVP_COMBI_SWING_TICKS in MixinLivingEntity_CombiStickSwingDuration. */
-    public static final int SWING_TICKS = 26;
+    public static final int SWING_TICKS = 20; // Oct 29: was 26.
 
     /**
      * ⚠ A strike is dropped if the target moves further than this from where the player stands when it lands. Without

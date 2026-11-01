@@ -65,6 +65,7 @@ public final class PlasmaDetonationEffects {
             // blocks still go to blackstone. WHICH blocks scorch (solid ones, half of them) stays here, unchanged.
             if (state.isSolidRender(level, pos) && level.random.nextFloat() < 0.5F) {
                 level.setBlock(pos, PlasmaConversions.convert(state, level.random).defaultBlockState(), FLAGS);
+                collapsePortalsAround(level, pos, state);
             }
 
             return;
@@ -83,6 +84,8 @@ public final class PlasmaDetonationEffects {
             level.setBlock(pos, Blocks.AIR.defaultBlockState(), FLAGS);
             wakeAdjacentFluid(level, pos);
         }
+
+        collapsePortalsAround(level, pos, state);
 
         if (level.random.nextInt(48) == 0) {
             spawnParticles(level, pos);
@@ -139,5 +142,36 @@ public final class PlasmaDetonationEffects {
         radiusYUp = Math.max(1, config.radius(Direction.UP));
         yScaleFactor = (radiusX + radiusZ) / 2.0 / Math.max(radiusYUp, radiusYDown);
         geometryResolved = true;
+    }
+
+    /**
+     * Oct 31 - FLAGS skips neighbour updates (so the crater does not cascade), which also meant a nether portal whose
+     * obsidian frame was scorched or blown away at the edge of the blast was never told and stayed hanging. Only for
+     * obsidian - the only frame block - the portal next to it gets the normal update and collapses, as it would if a
+     * player broke the frame. Same fix as avp_human's quarry.
+     */
+    private static void collapsePortalsAround(
+        net.minecraft.world.level.Level level,
+        BlockPos removed,
+        net.minecraft.world.level.block.state.BlockState removedState
+    ) {
+        if (!removedState.is(Blocks.OBSIDIAN)) {
+            return;
+        }
+
+        for (var direction : net.minecraft.core.Direction.values()) {
+            var neighbour = removed.relative(direction);
+
+            if (level.getBlockState(neighbour).is(Blocks.NETHER_PORTAL)) {
+                level.neighborShapeChanged(
+                    direction.getOpposite(),
+                    level.getBlockState(removed),
+                    neighbour,
+                    removed.immutable(),
+                    net.minecraft.world.level.block.Block.UPDATE_ALL,
+                    512
+                );
+            }
+        }
     }
 }

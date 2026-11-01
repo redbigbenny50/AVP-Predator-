@@ -12,6 +12,7 @@
     "MixinHurtingItem_PointBlankHit",
     "MixinInventory_GauntletAmmoPickup",
     "MixinItemEntity_GauntletCountdown",
+    "MixinDisplay_GauntletBeaconCleanup",
     "MixinLivingEntity_ApplyArmorEffects",
     "MixinLivingEntity_HonorLiveFire",
     "MixinLivingEntity_StandInIceBreak",
@@ -37,7 +38,9 @@
     "cloak.MixinLivingEntity_CloakDamage",
     "cloak.MixinLivingEntity_CloakVisibility",
     "cloak.MixinMob_CloakMeleeReveal",
-    "cloak.MixinPlayer_CloakMeleeReveal"
+    "cloak.MixinPlayer_CloakMeleeReveal",
+    "MixinLivingEntity_PlasmaArmor",
+    "MixinEnchantment_HandCasterEnchantments"
   ],
   "client": [
     "MixinGigFacehuggerModelRenderer_YautjaFace",

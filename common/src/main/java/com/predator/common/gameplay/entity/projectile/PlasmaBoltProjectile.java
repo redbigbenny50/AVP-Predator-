@@ -70,6 +70,50 @@ public class PlasmaBoltProjectile extends ThrowableProjectile {
         this.damageOverride = damage;
     }
 
+    /** [stated] Oct 30: the hand caster can be enchanted - Punch and Flame ride the bolt. Not saved (3-second life). */
+    private int punchLevel;
+
+    private int flameLevel;
+
+    public void setEnchantments(int punchLevel, int flameLevel) {
+        this.punchLevel = punchLevel;
+        this.flameLevel = flameLevel;
+    }
+
+    /**
+     * [stated] Oct 30 plasma caster rules, part 1 - "anything under 30 health thats not a player gets hit its a 1 shot
+     * kill. This is its max health reading not current health."
+     */
+    public static final float ONE_SHOT_MAX_HEALTH = 30.0F;
+
+    /** [stated] Oct 30 part 3 - "a 2x multiplier against xenomorphs and bosses". */
+    public static final float XENO_AND_BOSS_MULTIPLIER = 2.0F;
+
+    /** Large enough to kill anything under the one-shot line through what is left of its armour. */
+    private static final float ONE_SHOT_DAMAGE = 1.0E6F;
+
+    /**
+     * A xenomorph is every avp_alien creature (as the yautja count them - see YautjaPredicates). A boss is anything in
+     * the shared {@code c:bosses} tag (the dragon and the wither, plus other mods' bosses), or the warden and elder
+     * guardian.
+     */
+    public static boolean isXenomorphOrBoss(net.minecraft.world.entity.Entity entity) {
+        var type = entity.getType();
+        if ("avp_alien".equals(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(type).getNamespace())) {
+            return true;
+        }
+        return type.is(BOSSES)
+            || type == net.minecraft.world.entity.EntityType.WARDEN
+            || type == net.minecraft.world.entity.EntityType.ELDER_GUARDIAN
+            || type == net.minecraft.world.entity.EntityType.ENDER_DRAGON
+            || type == net.minecraft.world.entity.EntityType.WITHER;
+    }
+
+    private static final net.minecraft.tags.TagKey<net.minecraft.world.entity.EntityType<?>> BOSSES = net.minecraft.tags.TagKey.create(
+        net.minecraft.core.registries.Registries.ENTITY_TYPE,
+        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", "bosses")
+    );
+
     /**
      * A HAND CASTER shot. [stated] "it doesnt seem to have enough umph when it hits can you make a large explosion
      * effect when it hits a mob and when it hits a block have it destroy 3/4 a tnt explosion."
@@ -221,7 +265,36 @@ public class PlasmaBoltProjectile extends ThrowableProjectile {
                 ? (float) yautja.getTier().casterDamage(yautja.isHunter())
                 : PlasmaCaster.BOLT_DAMAGE;
 
-        result.getEntity().hurt(source, damage);
+        // [stated] Oct 30. The dragon is hit through its body parts; the rules read the dragon itself.
+        var struck = result.getEntity();
+        var target = struck instanceof net.minecraft.world.entity.boss.EnderDragonPart part ? part.parentMob : struck;
+        if (isXenomorphOrBoss(target)) {
+            damage *= XENO_AND_BOSS_MULTIPLIER;
+        }
+        if (
+            target instanceof LivingEntity living
+                && !(target instanceof net.minecraft.world.entity.player.Player)
+                && living.getMaxHealth() < ONE_SHOT_MAX_HEALTH
+        ) {
+            damage = ONE_SHOT_DAMAGE;
+        }
+        // Armour: 80% of it is ignored and toughness not at all - MixinLivingEntity_PlasmaArmor (and Yautja's
+        // override).
+
+        var hurt = struck.hurt(source, damage);
+
+        if (hurt && target instanceof LivingEntity living) {
+            if (flameLevel > 0) {
+                living.igniteForSeconds(5.0F);
+            }
+            if (punchLevel > 0) {
+                // Vanilla's Punch on an arrow: 0.6 blocks of shove per level along the bolt's flight, a little lift.
+                var push = getDeltaMovement().multiply(1.0D, 0.0D, 1.0D).normalize().scale(punchLevel * 0.6D);
+                if (push.lengthSqr() > 0.0D) {
+                    living.push(push.x, 0.1D, push.z);
+                }
+            }
+        }
 
         if (level() instanceof ServerLevel serverLevel) {
             PlasmaCaster.spawnImpact(serverLevel, result.getLocation());

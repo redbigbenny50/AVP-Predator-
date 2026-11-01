@@ -184,7 +184,12 @@ public class ShurikenProjectile extends ThrowableItemProjectile implements LeafP
 
         if (result.getEntity() instanceof LivingEntity target && getOwner() != null) {
             // ⚠ Scaled by the THROWER'S TIER — see YautjaTier.scaleThrown. A player's throw is unchanged.
-            target.hurt(damageSources().thrown(getOwner(), target), YautjaTier.scaleThrown(getOwner(), DAMAGE));
+            // ⚠ Oct 31 - thrown(projectile, owner). This was thrown(owner, target): the victim was credited as its own
+            // attacker
+            // (kill credit, aggro and "killed by" all pointed at itself) and the hit never came from this projectile,
+            // so
+            // nothing could tell where it struck - limb hitboxes need the projectile's flight path.
+            target.hurt(damageSources().thrown(this, getOwner()), YautjaTier.scaleThrown(getOwner(), DAMAGE));
         }
 
         // ⚠ A mob is not something a blade can EMBED in, so this path still drops — but it now uses the SAME break

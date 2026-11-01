@@ -14,12 +14,12 @@ import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 import java.util.List;
 
 /**
- * What avp_predator adds to VANILLA chests, in one place for both loaders (Fabric adds the pools through its loot event,
- * NeoForge through its loot-load event).
+ * What avp_predator adds to VANILLA chests, in one place for both loaders (Fabric adds the pools through its loot
+ * event, NeoForge through its loot-load event).
  * <p>
  * [stated] Oct 24 - "add the music disc fragments for alien and pred to ancient city chests as well as dungeon chests
- * so vanilla sources have them." Until now the fragments only came from avp_human's chests, so a pack without
- * avp_human could never make the disc. Nine fragments make the disc:
+ * so vanilla sources have them." Until now the fragments only came from avp_human's chests, so a pack without avp_human
+ * could never make the disc. Nine fragments make the disc:
  * </p>
  * <ul>
  * <li><b>Ancient city chests</b> - a {@value #ANCIENT_CITY_CHANCE} chance of 1-3 fragments per chest (rare, deep and

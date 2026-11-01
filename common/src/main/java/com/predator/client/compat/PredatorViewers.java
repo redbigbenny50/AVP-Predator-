@@ -15,7 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * avp_predator in JEI, REI and EMI - through BLib's viewer pages, so avp_predator needs no viewer dependency of its own.
+ * avp_predator in JEI, REI and EMI - through BLib's viewer pages, so avp_predator needs no viewer dependency of its
+ * own.
  * <ul>
  * <li>Phase 1 - every avp_predator mob's and block's drops, read from its loot tables.</li>
  * <li>Phase 3 - <b>World Interactions</b>: bottling yautja blood, and what plasma blasts turn blocks into (read from

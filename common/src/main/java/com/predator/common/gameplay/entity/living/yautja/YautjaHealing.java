@@ -27,9 +27,9 @@ import net.minecraft.world.item.Items;
  * </ul>
  * [stated] Oct 25 - "i said remove regen items from pred you kept the golden apples remove those too please": no
  * regeneration of any kind - neither the Regeneration II potion nor the enchanted golden apple is a healing item now.
- * Healing II is the only one. An item a data pack adds to the healing tag heals the same instant 40%.
- * ⚠ Healing over time is done here rather than through vanilla's Regeneration effect, which heals a FIXED 1 point per
- * interval whatever the maximum — it cannot be scaled.
+ * Healing II is the only one. An item a data pack adds to the healing tag heals the same instant 40%. ⚠ Healing over
+ * time is done here rather than through vanilla's Regeneration effect, which heals a FIXED 1 point per interval
+ * whatever the maximum — it cannot be scaled.
  */
 public final class YautjaHealing {
 
@@ -42,8 +42,8 @@ public final class YautjaHealing {
     private static final float HEALING_II_SHARE = 8.0F / 20.0F;
 
     /**
-     * The absorption-cap modifier the golden apple used to add. Apples no longer heal, but a yautja saved mid-buff in an
-     * older version still carries it, so {@link #tick} keeps taking it off on schedule.
+     * The absorption-cap modifier the golden apple used to add. Apples no longer heal, but a yautja saved mid-buff in
+     * an older version still carries it, so {@link #tick} keeps taking it off on schedule.
      */
     private static final ResourceLocation ABSORPTION_CAP_ID = ResourceLocation.fromNamespaceAndPath(
         "avp_predator",

@@ -175,7 +175,10 @@ public final class HandCasterClient {
 
         if (charging && sparkling) {
             chargeTicks++;
-            spawnChargeSparks(minecraft, Math.min(1.0F, (float) chargeTicks / HandCasterItem.CHARGE_TICKS));
+            spawnChargeSparks(
+                minecraft,
+                Math.min(1.0F, (float) chargeTicks / HandCasterItem.chargeTicks(player.getMainHandItem(), player))
+            );
         }
     }
 

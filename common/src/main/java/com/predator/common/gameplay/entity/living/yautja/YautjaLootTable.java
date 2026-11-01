@@ -24,17 +24,18 @@ import java.util.function.Function;
  * same roll at the same 5%. 🚨 Oct 24 - [stated] "predators should drop casters ... the caster is a very rare drop from
  * them" and "yes the weapons should drop from the pred why on earth would we not want it to." Only the sword, axe and
  * combi stick were ever in this roll; every other weapon a yautja carries (its loadout: the battleaxe, plasma sword,
- * both bows, smart disc, chain whip) and the hand caster had NO way to drop, because the
- * held-item drop is off (below). Now every one is in this same single roll - still one weapon at most - weighted so the
- * plain veritanium gear is common, the plasma gear uncommon and the hand caster the rarest of all.
+ * both bows, smart disc, chain whip) and the hand caster had NO way to drop, because the held-item drop is off (below).
+ * Now every one is in this same single roll - still one weapon at most - weighted so the plain veritanium gear is
+ * common, the plasma gear uncommon and the hand caster the rarest of all.
  * <p>
  * [stated] Oct 24 - "each kill should drop a weapon not half only because how difficult they are and extra weapons can
  * be broken down into veritanium anyway": there is no "nothing" result any more - every kill gives one weapon. And
  * "unblooded and spawned young blood tiers dont drop casters": the hand caster's entry only counts for Blooded and
  * above. It is checked on the yautja's own saved {@code Tier} (Yautja saves it under that name), so for an Unblooded or
  * a Youngblood the caster simply drops out of the roll and the other weapons share its tiny weight.
- * </p> Vanilla's own held-item drop is switched off (Yautja.getEquipmentDropChance), or the weapon
- * in its hand could be a second.</li>
+ * </p>
+ * Vanilla's own held-item drop is switched off (Yautja.getEquipmentDropChance), or the weapon in its hand could be a
+ * second.</li>
  * <li><b>Ammo</b> — sometimes a handful of what a yautja fires: darts, fire pellets or veritanium arrows.</li>
  * <li><b>NO ARMOUR</b> — it used to be in the weapon roll, so any yautja could drop a piece. Armour now comes only from
  * Hunters: one random piece each (Yautja.dropHunterArmourPiece), and vanilla's worn-armour drop is off too.</li>
@@ -69,8 +70,6 @@ public class YautjaLootTable {
 
     /** [stated] Oct 24 - "the caster is a very rare drop from them". */
     private static final int HAND_CASTER_WEIGHT = 1;
-
-
 
     /** Ammo: darts most often; something about two kills in three. */
     private static final int DART_WEIGHT = 2;

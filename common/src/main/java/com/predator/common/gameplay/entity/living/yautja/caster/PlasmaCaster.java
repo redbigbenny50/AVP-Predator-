@@ -172,7 +172,7 @@ public final class PlasmaCaster {
      * plus a blast every 60, pulse rifle 6 every 10. Twenty on a 68-tick cycle is a heavy hit that loses a straight
      * damage race, which is the point — the caster levels a fight, it does not win one on its own.
      */
-    public static final float BOLT_DAMAGE = 20.0F;
+    public static final float BOLT_DAMAGE = 21.0F; // [stated] Oct 30: "raise base damage by 1" (was 20)
 
     /**
      * Blocks per tick: 3.0 = 60 blocks a second, the speed of a fully drawn vanilla arrow.

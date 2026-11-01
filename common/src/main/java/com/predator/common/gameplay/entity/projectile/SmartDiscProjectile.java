@@ -297,7 +297,11 @@ public class SmartDiscProjectile extends ThrowableItemProjectile implements Leaf
         }
 
         // ⚠ Scaled by the THROWER'S TIER — see YautjaTier.scaleThrown. A player's throw is unchanged.
-        target.hurt(damageSources().thrown(getOwner(), target), YautjaTier.scaleThrown(getOwner(), DAMAGE));
+        // ⚠ Oct 31 - thrown(projectile, owner). This was thrown(owner, target): the victim was credited as its own
+        // attacker
+        // (kill credit, aggro and "killed by" all pointed at itself) and the hit never came from this projectile, so
+        // nothing could tell where it struck - limb hitboxes need the projectile's flight path.
+        target.hurt(damageSources().thrown(this, getOwner()), YautjaTier.scaleThrown(getOwner(), DAMAGE));
 
         // ⚠ AFTER the hit and AFTER the owner check above, so catching your own disc is silent of this and only a
         // real bite sounds. [stated] "when it actually hits a mob its entity".

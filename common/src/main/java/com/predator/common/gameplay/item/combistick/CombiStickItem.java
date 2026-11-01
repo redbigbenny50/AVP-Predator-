@@ -73,8 +73,11 @@ public class CombiStickItem extends Item {
      */
     private static final Map<ItemStack, Integer> openedAtTick = new WeakHashMap<>();
 
-    /** ⚠ Trident-like reach weapon: 8 total damage (7 + the player's base 1). */
-    private static final float ATTACK_DAMAGE = 7.0F;
+    /**
+     * [stated] Oct 29: it hit far softer than a trident - raise it to at least a trident's and a bit higher. A trident
+     * is 9 total (8 + the player's base 1); the combi stick is now 10 total (9 + 1). It was 8.
+     */
+    private static final float ATTACK_DAMAGE = 9.0F;
 
     /**
      * ⚠⚠ TAKEN FROM THE REFERENCE JAR, not from the trident. Its {@code registerSpearRaw} builds the modifier as

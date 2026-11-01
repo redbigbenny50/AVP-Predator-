@@ -1,0 +1,45 @@
+{
+  "entityTypePredicate": "#avp_predator:predators",
+  "geneBonusDataEntries": [
+    {
+      "id": "avp_human:max_health",
+      "operation": "ADDITIVE",
+      "value": 2.5
+    },
+    {
+      "id": "avp_human:attack_damage",
+      "operation": "ADDITIVE",
+      "value": 1.0
+    },
+    {
+      "id": "avp_human:stealth",
+      "operation": "MULTIPLICATIVE",
+      "value": 0.08333333333333333
+    },
+    {
+      "id": "avp_human:acid_resistance",
+      "operation": "MULTIPLICATIVE",
+      "value": 0.08333333333333333
+    },
+    {
+      "id": "avp_human:jump_height",
+      "operation": "ADDITIVE",
+      "value": 0.01875
+    },
+    {
+      "id": "avp_human:keen_senses",
+      "operation": "MULTIPLICATIVE",
+      "value": 0.03125
+    },
+    {
+      "id": "avp_human:knockback_resistance",
+      "operation": "ADDITIVE",
+      "value": 0.05
+    },
+    {
+      "id": "avp_human:armor_penetration",
+      "operation": "MULTIPLICATIVE",
+      "value": 0.0375
+    }
+  ]
+}

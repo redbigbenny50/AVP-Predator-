@@ -3,6 +3,7 @@ package com.predator.client.animation.entity;
 import com.blib.api.client.animation.v1.animator.AzAnimationContext;
 import com.blib.api.client.animation.v1.animator.AzAnimatorConfig;
 import com.blib.api.client.animation.v1.animator.AzEntityAnimator;
+import com.blib.api.client.animation.v1.pose.AzPoseModifierRegistry;
 import com.blib.api.client.animation.v1.track.AzAnimationTrack;
 import com.blib.api.client.animation.v1.track.AzAnimationTrackContainer;
 import com.predator.PredatorResources;
@@ -69,6 +70,12 @@ public class YautjaAnimator extends AzEntityAnimator<Yautja> {
     @Override
     public @NotNull ResourceLocation getAnimationLocation(Yautja animatable) {
         return ANIMATION;
+    }
+
+    /** BLib pose system (Oct 31) - spring physics on all 42 dreadlocks; see {@link YautjaDreadlockPhysics}. */
+    @Override
+    protected void registerPoseModifiers(AzPoseModifierRegistry<Yautja> modifiers) {
+        YautjaDreadlockPhysics.register(modifiers);
     }
 
     @Override

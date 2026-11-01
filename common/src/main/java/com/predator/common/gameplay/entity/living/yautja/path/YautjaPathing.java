@@ -279,8 +279,8 @@ public final class YautjaPathing {
      * <li>the stalk navigator keeps its 8x water cost, so it still goes ROUND water rather than through it - a leap
      * over water costs the same as any other leap, so a stalking yautja can clear a stream instead of swimming it,
      * which is the rule {@link YautjaJump} was written to: "both should clear a stream rather than swim it";</li>
-     * <li>{@link YautjaJump} stays as the fallback for an edge the route did not plan a leap at, and stands aside on
-     * a step the pathfinder has planned as a leap, so the two never fire at the same edge.</li>
+     * <li>{@link YautjaJump} stays as the fallback for an edge the route did not plan a leap at, and stands aside on a
+     * step the pathfinder has planned as a leap, so the two never fire at the same edge.</li>
      * </ul>
      */
     private static final PathLeapConfig LEAP = PathLeapConfig.of(4, 7);
